@@ -1,0 +1,7 @@
+Name,Title,Giver,Category,Brief,Prereq,MinRep,Night,RewardCash,RewardPublic,RewardBusiness,RewardUnderworld,RewardVehicle,TimeBonusPerSec,Optional,Repeatable
+m1_welcome,Welcome to Calgary,diner,Legit,Marcy Delorme needs a trustworthy driver for a simple first-day job: pick up a bakery order and deliver it downtown.,,,False,450,5,0,0,kestrel,0,NoDamage:100,False
+m2_delivery,Downtown Delivery,diner,Legit,A signed contract has to cross downtown before the law office loading dock closes. Traffic and tight parking are the real enemy.,m1_welcome,,False,700,3,2,0,,4,NoDamage:150;NoWanted:100,False
+m3_missing,The Missing Vehicle,whitaker,Mixed,"Owen Whitaker lost a pickup from his yard. Search the industrial vehicle yards, then decide what to do with what you find.",m1_welcome,,False,0,0,0,0,,0,NoWanted:150,False
+m4_highway,Highway Pressure,diner,Mixed,"Prove yourself on Prairie Trail: six checkpoints against the clock, through live traffic, in a borrowed Stampede RS.",m2_delivery,,False,900,4,0,0,,8,NoDamage:250;NoWanted:150,False
+m5_rival,The Rival Contract,whitaker,Mixed,"Redline Hauling is undercutting Whitaker Freight on a big contract. Negotiate, out-drive Dante Kowalczyk, or wreck his convoy.",m3_missing,,False,0,0,0,0,,0,NoWanted:200,False
+m6_afterdark,After Dark,diner,Mixed,"One package, three buyers, and a long night. Collect it, lose Dante's crew and the police, then decide who gets it.",m4_highway;m5_rival,,True,0,0,0,0,,0,NoDamage:300,False

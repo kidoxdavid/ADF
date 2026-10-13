@@ -1,0 +1,59 @@
+Name,MissionId,Index,Type,Text,Location,Radius,TimeLimit,Speaker,Dialogue,Param,VehicleId,ChoiceA,ChoiceB,ChoiceC,JumpA,JumpB,JumpC,EffectA,EffectB,EffectC,OnEnter,Checkpoint
+m1_welcome_0,m1_welcome,0,Dialogue,,diner,0,0,,"Marcy::You're the new one. Rowan, right? The hostel clerk says you walked in off the Greyhound with one bag and a map you didn't need.|Rowan::The map's for appearances. I'm good with roads.|Marcy::Good. In Calgary the road is the whole religion. Chinook arch overhead, Prairie Trail underneath, and everyone late for something.|Marcy::First-day job, nothing spicy. Walk over to the curb marker, there's a loaner Kestrel waiting for you.",,,,,,-1,-1,-1,,,,,True
+m1_welcome_1,m1_welcome,1,GoTo,"Walk to the marker. WASD to move, hold Shift to sprint, Space to jump.",tut_walk,6,0,,,,,,,,-1,-1,-1,,,,,True
+m1_welcome_2,m1_welcome,2,EnterVehicle,Get into the loaner Kestrel. Press E next to the car.,tut_car,0,0,,,,kestrel,,,,-1,-1,-1,,,,,True
+m1_welcome_3,m1_welcome,3,DriveTo,Pick up the order at Prairie Rye Bakery. Stop inside the marker.,bakery,12,0,,,stop,,,,,-1,-1,-1,,,,,True
+m1_welcome_4,m1_welcome,4,Dialogue,,bakery,0,0,,"Baker::Marcy's friend? Two dozen rye loaves and the cinnamon buns. Hot, so don't take the long way.|Rowan::Where's it going?|Baker::Foothills Grand Hotel. Their valet bay. Press M and drop a waypoint if you've forgotten the way.",,,,,,-1,-1,-1,,,,,True
+m1_welcome_5,m1_welcome,5,OpenMap,"Press M to open the city map. Left-click anywhere to set a waypoint, right-click to clear it.",,0,0,,,,,,,,-1,-1,-1,,,,,True
+m1_welcome_6,m1_welcome,6,DriveTo,Deliver the bread to the Foothills Grand Hotel valet bay.,hotel,12,0,,,stop,,,,,-1,-1,-1,,,,,True
+m1_welcome_7,m1_welcome,7,Dialogue,,hotel,0,0,,"Valet::Right on time, and still warm. You must be Marcy's find.|Marcy::(radio) Told you. Keep the Kestrel for now, Rowan. Come see me at the diner when you're ready for more.",,,,,,-1,-1,-1,,,,,True
+m1_welcome_8,m1_welcome,8,Complete,,,0,0,,,,,,,,-1,-1,-1,cash+0,,,,True
+m2_delivery_0,m2_delivery,0,Dialogue,,diner,0,0,,"Marcy::Calder Tower has a contract that can't be late. The law office across downtown closes its loading dock 150 seconds after you collect it.|Rowan::Downtown at rush hour?|Marcy::Welcome to the job. Lights are your friend and parked delivery vans are not. Park inside the marker, and fully stop.",,,,,,-1,-1,-1,,,,,True
+m2_delivery_1,m2_delivery,1,DriveTo,Pick up the sealed contract at Calder Tower. Stop inside the marker.,calder,12,0,,,stop,,,,,-1,-1,-1,,,,,True
+m2_delivery_2,m2_delivery,2,DriveTo,Deliver the contract to Riverfront Law Offices before the dock closes.,law,12,150,,,stop,,,,,-1,-1,-1,,,,,True
+m2_delivery_3,m2_delivery,3,Dialogue,,law,0,0,,"Clerk::Signed, sealed, and with eleven seconds to spare in my head. Thank you.|Marcy::(radio) That's a clean run. People notice clean runs.",,,,,,-1,-1,-1,,,,,True
+m2_delivery_4,m2_delivery,4,Complete,,,0,0,,,,,,,,-1,-1,-1,cash+0,,,,True
+m3_missing_0,m3_missing,0,Dialogue,,whitaker,0,0,,"Owen::Thanks for coming out. My father started this company with one truck and a handshake. Tuesday night a Ranchhand pickup vanished from our lot.|Owen::The police have a form for it. I have forty deliveries a week and one fewer truck.|Rowan::You think it's in an industrial yard.|Owen::Three yards take things in without asking much. Check Yard A, B and C. If you find it, drive it out.",,,,,,-1,-1,-1,,,,,True
+m3_missing_1,m3_missing,1,FindVehicle,Search the vehicle yards for Whitaker's missing Ranchhand pickup.,yard_a;yard_b;yard_c,25,0,,,,ranchhand,,,,-1,-1,-1,,,,,True
+m3_missing_2,m3_missing,2,Dialogue,,,0,0,,"Hector::You found it. My cousin parked it here for safekeeping. Look, I can pretend I never saw you, or we can discuss a finder's fee.|Rowan::(thinking) Whitaker would pay for honesty. Dunbar Wreckers pays for silence. Hector wants a cut either way.",,,,,,-1,-1,-1,,,,,True
+m3_missing_3,m3_missing,3,Choice,What do you do with the truck?,,0,0,,,,,Drive it back to Owen Whitaker|,"Sell it to Dunbar Wreckers, no questions asked|",Pay Hector $250 to forget the whole thing|cash>=250,4,7,4,rep_business+3,rep_underworld+4,cash-250;rep_business+2,,True
+m3_missing_4,m3_missing,4,DriveTo,Return the pickup to Whitaker Freight Co.,whitaker,14,0,,,stop;mv,,,,,-1,-1,-1,,,,,True
+m3_missing_5,m3_missing,5,Dialogue,,whitaker,0,0,,"Owen::That's my truck. I won't ask how, because you look like someone who'll tell me the honest version later.|Owen::Take this. And Rowan, my door is open.",,,,,,-1,-1,-1,,,,,True
+m3_missing_6,m3_missing,6,Complete,,,0,0,,,,,,,,-1,-1,-1,cash+800;rep_business+8;rep_public+3,,,,True
+m3_missing_7,m3_missing,7,DriveTo,Deliver the pickup to Dunbar Auto Wreckers.,chop,14,0,,,stop;mv,,,,,-1,-1,-1,,,,heat+1,True
+m3_missing_8,m3_missing,8,Dialogue,,chop,0,0,,"Wrecker::Nice truck. It will be forty parts by Friday. No paperwork, no names. That's the whole deal.|Wrecker::Fourteen hundred. Cash. Smile, you're on nobody's camera.",,,,,,-1,-1,-1,,,,,True
+m3_missing_9,m3_missing,9,Complete,,,0,0,,,,,,,,-1,-1,-1,cash+1400;rep_underworld+10;flag:sold_truck,,,,True
+m4_highway_0,m4_highway,0,Dialogue,,diner,0,0,,"Marcy::Dante's drivers run Prairie Trail like it's their driveway. I need to know you can keep up. Not impress them. Keep up.|Marcy::There's a Stampede RS out front. Borrowed, so bring it back in one piece. Six checkpoints down the highway, 200 seconds.|Rowan::Traffic?|Marcy::Lots. That's the point.",,,,,,-1,-1,-1,,,,,True
+m4_highway_1,m4_highway,1,EnterVehicle,Get into the Stampede RS.,,0,0,,,,stampede,,,,-1,-1,-1,,,,,True
+m4_highway_2,m4_highway,2,DriveTo,Drive to the Prairie Trail on-ramp.,hwy_start,25,0,,,,,,,,-1,-1,-1,,,,,True
+m4_highway_3,m4_highway,3,Checkpoints,Hit all six highway checkpoints. Merge cleanly and watch the traffic.,cp_hwy1;cp_hwy2;cp_hwy3;cp_hwy4;cp_hwy5;cp_hwy6,28,200,,,traffic+,,,,,-1,-1,-1,,,,,True
+m4_highway_4,m4_highway,4,Dialogue,,,0,0,,"('Marcy::(radio) Not bad. Smooth through the Southbridge overpass. Bring the car back to Bow Valley Auto Works, the garage guys will check it over.',)",,,,,,-1,-1,-1,,,,,True
+m4_highway_5,m4_highway,5,DriveTo,Return the Stampede RS to Bow Valley Auto Works.,garage,18,0,,,stop;mv,,,,,-1,-1,-1,,,,,True
+m4_highway_6,m4_highway,6,Complete,,,0,0,,,,,,,,-1,-1,-1,cash+0,,,,True
+m5_rival_0,m5_rival,0,Dialogue,,whitaker,0,0,,"Owen::Dante Kowalczyk wants the Foothills Brewery pallet contract. He's quoting under cost, which means he's not hauling beer, he's hauling something else.|Owen::Go see him at Redline Hauling. Talk if you can. I won't tell you how to handle him.",,,,,,-1,-1,-1,,,,,True
+m5_rival_1,m5_rival,1,DriveTo,Meet Dante at Redline Hauling.,redline,15,0,,,stop,,,,,-1,-1,-1,,,,,True
+m5_rival_2,m5_rival,2,Dialogue,,redline,0,0,,"Dante::Rowan. Marcy's driver, Whitaker's errand-runner. You'd be surprised how small this city is when it's thirty below.|Dante::The contract is a lane, and I'm already driving in it. You can pull over, or we can find out who the lane belongs to.|Dante::Pick your weather.",,,,,,-1,-1,-1,,,,,True
+m5_rival_3,m5_rival,3,Choice,How do you answer Dante?,,0,0,,,,,Negotiate a split|rep_business>=8,Challenge him to a race for the contract|,Wreck his convoy truck|,4,6,9,,,,,True
+m5_rival_4,m5_rival,4,Dialogue,,,0,0,,"Dante::You carry Owen's name like a coat that fits. Fine. Half the lane, and we both stop pretending.|Dante::Tell Whitaker the pallets split down the middle. And Rowan. Come see me if you ever outgrow his hours.",,,,,,-1,-1,-1,,,,,True
+m5_rival_5,m5_rival,5,Complete,,,0,0,,,,,,,,-1,-1,-1,cash+900;rep_business+10;flag:rival_split,,,,True
+m5_rival_6,m5_rival,6,Race,Beat Dante's Stampede through all four checkpoints in the industrial district.,cp_race1;cp_race2;cp_race3;cp_race4;redline,26,180,,,speed:0.93,stampede,,,,-1,-1,-1,,,,,True
+m5_rival_7,m5_rival,7,Dialogue,,,0,0,,"('Dante::(leaning on his hood) A clean line through Freight Road 14. All right, the contract is yours. This time.',)",,,,,,-1,-1,-1,,,,,True
+m5_rival_8,m5_rival,8,Complete,,,0,0,,,,,,,,-1,-1,-1,cash+1500;rep_underworld+5;rep_public+3;flag:rival_beaten_race,,,,True
+m5_rival_9,m5_rival,9,Ram,Wreck Dante's convoy truck before it reaches its drop-off.,redline;convoy_end,16,150,,,,haul7,,,,-1,-1,-1,,,,,True
+m5_rival_10,m5_rival,10,Dialogue,,,0,0,,"(""Marcy::(radio) That was loud. Dante's people are already talking about you. Keep your head down for a day or two."",)",,,,,,-1,-1,-1,,,,,True
+m5_rival_11,m5_rival,11,Complete,,,0,0,,,,,,,,-1,-1,-1,cash+1800;rep_underworld+12;heat+1;flag:rival_wrecked,,,,True
+m6_afterdark_0,m6_afterdark,0,Dialogue,,diner,0,0,,"Marcy::It's dark enough now. Here's the shape of it: a sealed package at the Airport Cargo Depot. Dante wants it, the police want to know who has it, and I want you alive.|Rowan::That's a long list of wants.|Marcy::That's every job in this city after dark. Go. Don't stop until you hear from me.",,,,,,-1,-1,-1,,,,time=21.5,True
+m6_afterdark_1,m6_afterdark,1,DriveTo,Collect the package at the Airport Cargo Depot.,cargo,16,0,,,stop,,,,,-1,-1,-1,,,,,True
+m6_afterdark_2,m6_afterdark,2,Dialogue,,cargo,0,0,,"Handler::It's yours. Three cars just rolled into the lot, Redline plates, and I don't think they're here for coffee.|Handler::Back gate. Go.",,,,,,-1,-1,-1,,,,,True
+m6_afterdark_3,m6_afterdark,3,Escape,Lose Dante's crew and reach Warehouse 9.,safehouse,18,260,,,n:3;veh:stampede,,,,,-1,-1,-1,,,,,True
+m6_afterdark_4,m6_afterdark,4,Dialogue,,,0,0,,"(""Marcy::(radio) Scanner says FRPS got a tip. Inspector Calloway's units are converging on you. You're about to be very popular."",)",,,,,,-1,-1,-1,,,,wanted=3,True
+m6_afterdark_5,m6_afterdark,5,Evade,Lose the police. Break line of sight and stay hidden until the search ends.,,0,0,,,3,,,,,-1,-1,-1,,,,,True
+m6_afterdark_6,m6_afterdark,6,GoTo,The Inspector wants to meet at the Bow River. Walk or drive to the meeting point.,meet_overlook,22,0,,,,,,,,-1,-1,-1,,,,,True
+m6_afterdark_7,m6_afterdark,7,Dialogue,,meet_overlook,0,0,,"Calloway::Rowan Vale. I'm Inspector Calloway. I've watched you for three weeks. You've been careful, which means you've been paid to be.|Dante::(stepping out of the dark) Inspector. You always did choose the better view. Rowan, that package is a lane. Hand it over and the lane's yours.|Marcy::(radio, quiet) Whatever you pick, pick it fast.",,,,,,-1,-1,-1,,,,,True
+m6_afterdark_8,m6_afterdark,8,Choice,Who gets the package?,,0,0,,,,,Hand it to Inspector Calloway|,"Sell it to Dante for $8,000|",Throw it into the Bow River|,9,11,13,,,,,True
+m6_afterdark_9,m6_afterdark,9,Dialogue,,,0,0,,"(""Calloway::That's not a favour, it's a start. People who help me eventually get to leave the game.|Calloway::Go home, Rowan. Sleep."",)",,,,,,-1,-1,-1,,,,,True
+m6_afterdark_10,m6_afterdark,10,Complete,,,0,0,,,,,,,,-1,-1,-1,cash+2000;rep_public+15;rep_business+5;flag:ending_law,,,,True
+m6_afterdark_11,m6_afterdark,11,Dialogue,,,0,0,,"('Dante::Smart. The city is a river, Rowan. You can be the current or you can be the bridge.|Dante::Eight thousand. And my number.',)",,,,,,-1,-1,-1,,,,,True
+m6_afterdark_12,m6_afterdark,12,Complete,,,0,0,,,,,,,,-1,-1,-1,cash+8000;rep_underworld+20;heat+1;flag:ending_underworld,,,,True
+m6_afterdark_13,m6_afterdark,13,Dialogue,,,0,0,,"(""Marcy::(radio) You... threw it in the Bow? Rowan. That's the most Calgary thing I've ever heard.|Marcy::Nobody gets it. Nobody wins. Come by the diner. First round's on me."",)",,,,,,-1,-1,-1,,,,,True
+m6_afterdark_14,m6_afterdark,14,Complete,,,0,0,,,,,,,,-1,-1,-1,cash+3500;rep_public+5;rep_underworld+5;flag:ending_independent,,,,True

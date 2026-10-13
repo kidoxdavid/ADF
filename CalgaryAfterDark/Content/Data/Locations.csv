@@ -1,0 +1,62 @@
+Name,DisplayName,Kind,District,X,Y,Radius,Description,DiscoverReward,Tags
+needle,Skyline Needle,Landmark,Downtown,185.3,-231.9,60,Observation tower and the heart of the skyline.,150,
+calder,Calder Tower Lobby,Waypoint,Downtown,-139.3,-396.7,14,Pickup bay,0,
+law,Riverfront Law Offices,Waypoint,Downtown,379.9,-744.4,12,Loading zone,0,
+hotel,Foothills Grand Hotel,Waypoint,Downtown,189.5,-80.6,12,Valet bay,0,
+police_hq,FRPS Central Station,Police,Downtown,-391.7,-291.3,20,Foothills Regional Police Service HQ,0,
+conv_dt,Chinook Corner Store,Shop,Downtown,74.3,-233.5,12,"Snacks, coffee and first aid.",0,
+dome,Saddle Dome Arena,Landmark,Downtown,516.1,255.3,70,Home of the Stampeders hockey club.,100,
+courier_hub,Metro Courier Hub,Giver,Downtown,-313.0,7.3,12,"Courier gigs: pick a parcel, beat the clock.",0,gig
+diner,Last Spike Diner,Giver,Beltline,-363.2,484.7,12,Marcy Delorme holds court in the corner booth.,0,
+garage,Bow Valley Auto Works,Garage,Beltline,-23.9,701.3,16,"Repairs, paint and performance parts.",0,
+loft,Beltline Lofts,Property,Beltline,-511.8,750.6,12,A downtown loft with a view of the skyline.,0,
+bakery,Prairie Rye Bakery,Waypoint,Beltline,365.4,541.2,12,Pickup counter,0,
+tut_walk,Walk Here,Waypoint,Beltline,-385.5,510.5,7,Tutorial marker,0,
+tut_car,Loaner Car,Waypoint,Beltline,-301.4,571.6,8,Tutorial car spawn,0,
+hospital,Bow Valley General Hospital,Hospital,Beltline,510.1,1360.8,18,Emergency,0,
+start,Hostel Arrival Point,Waypoint,Beltline,-410.3,459.6,8,New game spawn,0,
+dealer,Macleod Motor Mile,Shop,Beltline,447.4,1598.0,16,Dealerships: new and used vehicles.,0,
+stampede_park,Stampede Grounds,Landmark,Beltline,733.9,479.3,60,"Fairgrounds, midway and rodeo arena.",100,
+whitaker,Whitaker Freight Co.,Giver,Industrial,2266.1,560.0,14,"Owen Whitaker runs a clean, honest freight business.",0,
+yard_a,Vehicle Yard A,Waypoint,Industrial,2839.9,258.5,16,Impound and salvage yard,0,
+yard_b,Vehicle Yard B,Waypoint,Industrial,3117.4,1180.0,16,Auction lot,0,
+yard_c,Vehicle Yard C,Waypoint,Industrial,2559.1,1800.0,16,Trucking compound,0,
+redline,Redline Hauling,Waypoint,Industrial,3105.1,560.0,14,Dante Kowalczyk's depot.,0,
+chop,Dunbar Auto Wreckers,Waypoint,Industrial,2001.3,1500.0,14,Salvage yard that asks no questions.,0,
+depot,Eastlake Freight Depot,Property,Industrial,2545.8,560.0,14,A small transport business you can own.,0,
+safehouse,Warehouse 9,Waypoint,Industrial,2837.9,1490.0,14,Quiet loading dock,0,
+conv_ind,Truckers' Fuel & Go,Shop,Industrial,1986.5,800.0,12,"Fuel, coffee and snacks for the road.",0,
+cargo,Airport Cargo Depot,Waypoint,Airport,2751.0,-3000.0,16,Cargo handling bay,0,
+rental,Prairie Vehicle Rental,Landmark,Airport,2336.8,-2300.0,30,Rental fleet lot.,100,
+terminal,Calgary Intl. Terminal (fictional),Landmark,Airport,2750,-3400,60,Terminal approach,120,
+plaza,Southpointe Plaza,Shop,Suburb,319.3,2507.4,14,Local shopping plaza with a big parking lot.,0,
+school,Crescent Heights School,Landmark,Suburb,-550.1,2782.6,30,Neighbourhood school and playground.,80,
+westpark,Ridgeview Community Park,Landmark,Suburb,-2724.1,390.7,30,Community park and rink.,80,
+riverwalk,Bow Riverwalk Lookout,Landmark,Riverwalk,6.4,-1029.9,25,The skyline at its best.,150,
+island,Prince's Isle Gardens,Landmark,Riverwalk,-347.6,-1422.3,40,Riverside gardens and picnic lawns.,100,
+overlook,Foothills Overlook,Overlook,City Edge,-4480,250,40,The Rockies on a clear day.,250,
+east_gate,East City Limit,Landmark,City Edge,4450,-120,30,The prairie begins.,100,
+g_bl1,Gig stop (Beltline),Waypoint,Beltline,134.2,1019.6,14,Courier stop,0,gig
+g_dt1,Gig stop (Downtown),Waypoint,Downtown,-363.3,-561.1,14,Courier stop,0,gig
+g_dt2,Gig stop (Downtown),Waypoint,Downtown,457.4,-334.0,14,Courier stop,0,gig
+g_kn1,Gig stop (Kensington),Waypoint,Kensington,-300.0,-1650.0,14,Courier stop,0,gig
+g_in1,Gig stop (Industrial),Waypoint,Industrial,2280.3,1180.0,14,Courier stop,0,gig
+g_in2,Gig stop (Industrial),Waypoint,Industrial,3119.9,260.9,14,Courier stop,0,gig
+g_su1,Gig stop (Suburb),Waypoint,Suburb,-408.1,2638.6,14,Courier stop,0,gig
+g_su2,Gig stop (Suburb),Waypoint,Suburb,-2475.2,514.2,14,Courier stop,0,gig
+g_ap1,Gig stop (Airport),Waypoint,Airport,2350.8,-2300.0,14,Courier stop,0,gig
+g_ap2,Gig stop (Airport),Waypoint,Airport,2750.7,-2650.0,14,Courier stop,0,gig
+g_bl2,Gig stop (Beltline),Waypoint,Beltline,-662.5,1137.0,14,Courier stop,0,gig
+cp_hwy1,Highway checkpoint 1,Waypoint,Highway,1539.4,-718.8,24,,0,
+cp_hwy2,Highway checkpoint 2,Waypoint,Highway,1527.5,93.1,24,,0,
+cp_hwy3,Highway checkpoint 3,Waypoint,Highway,1488.5,900.0,24,,0,
+cp_hwy4,Highway checkpoint 4,Waypoint,Highway,1520.0,1500.0,24,,0,
+cp_hwy5,Highway checkpoint 5,Waypoint,Highway,1450.0,2400.0,24,,0,
+cp_hwy6,Highway checkpoint 6,Waypoint,Highway,1520.0,3000.0,24,,0,
+hwy_start,Prairie Trail On-Ramp,Waypoint,Highway,1430.0,-1700.0,20,,0,
+cp_race1,Race checkpoint 1,Waypoint,Industrial,2000.3,560.0,20,,0,
+cp_race2,Race checkpoint 2,Waypoint,Industrial,3398.8,560.0,20,,0,
+cp_race3,Race checkpoint 3,Waypoint,Industrial,3395.3,1490.0,20,,0,
+cp_race4,Race checkpoint 4,Waypoint,Industrial,2001.2,1490.0,20,,0,
+convoy_end,Convoy Destination,Waypoint,Industrial,2000.0,251.3,18,,0,
+meet_overlook,Bow River Meet,Waypoint,Riverwalk,-445.9,-1549.2,20,Inspector Calloway's meeting spot,0,

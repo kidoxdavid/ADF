@@ -1,0 +1,19 @@
+{
+	"FileVersion": 3,
+	"EngineAssociation": "5.4",
+	"Category": "Games",
+	"Description": "Calgary After Dark - an original open-world action game set in a fictionalized Calgary, Alberta.",
+	"Modules": [
+		{
+			"Name": "CalgaryAfterDark",
+			"Type": "Runtime",
+			"LoadingPhase": "Default",
+			"AdditionalDependencies": [ "Engine", "CoreUObject" ]
+		}
+	],
+	"Plugins": [
+		{ "Name": "EnhancedInput", "Enabled": true },
+		{ "Name": "ProceduralMeshComponent", "Enabled": true }
+	],
+	"TargetPlatforms": [ "Windows" ]
+}

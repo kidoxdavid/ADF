@@ -1,0 +1,10 @@
+Name,DisplayName,Category,Price,MassKg,AccelMps2,TopSpeedKph,BrakeMps2,MaxSteerDeg,Grip,SuspensionHz,CollisionResistance,OffRoad,LengthM,WidthM,HeightM,Color,TrafficWeight,Dealer,RepairPerPoint
+kestrel,Kestrel C1,Compact,4500,1150,5.5,165,9.5,35,1.0,1.9,0.8,0.2,3.9,1.7,1.45,#5B8DB8,30,True,25
+maple,Maple LX,Sedan,9000,1450,5.2,185,9.5,32,1.05,1.7,1.0,0.2,4.7,1.82,1.43,#A7A9AC,28,True,35
+foothill,Foothill X,SUV,14000,1950,4.6,175,9.0,31,1.0,1.6,1.2,0.7,4.8,1.95,1.75,#3F4B3C,18,True,50
+ranchhand,Ranchhand 150,Pickup,16000,2250,4.4,170,8.8,30,0.95,1.5,1.3,0.8,5.4,2.0,1.85,#8C2F2B,14,True,55
+courier,Courier V,Van,11000,2100,3.9,150,8.5,30,0.95,1.5,1.2,0.3,5.2,2.0,2.1,#E8E8E8,8,True,45
+haul7,Haul 7,Truck,22000,6500,2.8,125,7.5,25,0.9,1.3,1.6,0.4,7.8,2.5,3.0,#C9A227,6,True,90
+stampede,Stampede RS,PerfSedan,28000,1600,8.0,235,12.0,34,1.2,2.0,1.0,0.1,4.8,1.85,1.38,#B0221F,4,True,70
+chinook_gt,Chinook GT,Sports,45000,1380,9.2,265,13.0,36,1.3,2.2,0.9,0.05,4.4,1.9,1.2,#F2B134,2,True,100
+patrol,FRPS Interceptor,Police,0,1750,7.2,215,11.5,34,1.15,1.9,1.1,0.2,4.9,1.9,1.45,#F4F4F4,0,False,0

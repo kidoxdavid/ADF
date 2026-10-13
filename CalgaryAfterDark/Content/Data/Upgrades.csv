@@ -1,0 +1,13 @@
+Name,DisplayName,Category,Level,Price,Bonus
+engine_1,Stage 1 Tune,Engine,1,1200,0.08
+engine_2,Stage 2 Turbo,Engine,2,3000,0.17
+engine_3,Stage 3 Race Build,Engine,3,6500,0.27
+brakes_1,Sport Pads,Brakes,1,600,0.1
+brakes_2,Slotted Rotors,Brakes,2,1500,0.22
+brakes_3,Big Brake Kit,Brakes,3,3200,0.35
+handling_1,Sport Springs,Handling,1,800,0.06
+handling_2,Coilovers,Handling,2,2000,0.13
+handling_3,Full Suspension + Sway Bars,Handling,3,4500,0.2
+wheels_1,Steel Sport Rims,Wheels,1,400,0.02
+wheels_2,Alloy Multi-Spoke,Wheels,2,900,0.04
+wheels_3,Forged Deep-Dish,Wheels,3,1800,0.06

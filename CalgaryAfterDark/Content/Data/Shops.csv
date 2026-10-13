@@ -1,0 +1,5 @@
+Name,DisplayName,Type,Location,Stock
+conv_dt,Chinook Corner Store,Convenience,conv_dt,coffee;bar;firstaid
+conv_ind,Truckers' Fuel & Go,Convenience,conv_ind,coffee;bar;firstaid
+plaza,Southpointe Plaza Market,Convenience,plaza,coffee;bar;firstaid
+dealer,Macleod Motor Mile,Dealership,dealer,kestrel;maple;foothill;ranchhand;courier;haul7;stampede;chinook_gt

@@ -1,0 +1,3 @@
+Name,DisplayName,Location,Price,IncomePerDay,VehicleSlots,SavePoint,Description
+loft,Beltline Loft,loft,18000,0,2,True,A bright loft near the nightlife. Save point and two vehicle slots.
+depot,Eastlake Freight Depot,depot,60000,600,4,True,"A small transport business. Earns $600 per in-game day, plus a save point and storage."
