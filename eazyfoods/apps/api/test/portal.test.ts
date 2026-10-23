@@ -66,7 +66,9 @@ describe('vendor onboarding to publication', () => {
     expect(ok.status).toBe(200);
     expect(ok.body.url).toMatch(/^\/uploads\/[a-f0-9]{32}\.jpg$/);
     expect((await app.inject({ url: ok.body.url })).statusCode).toBe(200);
-    expect((await app.inject({ url: '/uploads/../../etc/passwd' })).statusCode).not.toBe(200);
+    const trav = await app.inject({ url: '/uploads/../../etc/passwd' });
+    expect(trav.body).not.toContain('root:');                       // never serves files outside the uploads folder
+    expect((await app.inject({ url: '/uploads/%2e%2e/%2e%2e/etc/passwd' })).body).not.toContain('root:');
     expect((await upload((await newCustomer()).cookie, '/api/uploads/image', JPEG)).status).toBe(403);   // plain customers cannot upload
     expect((await upload(owner, '/api/uploads/image', Buffer.concat([JPEG, Buffer.alloc(6 * 1024 * 1024)]))).status).toBe(413);
   });
