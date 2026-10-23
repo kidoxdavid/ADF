@@ -16,7 +16,7 @@ export async function createSession(userId: string, reply: FastifyReply) {
   const token = newToken();
   const expires = new Date(Date.now() + config.SESSION_DAYS * 86400_000);
   await pool.query('INSERT INTO sessions(user_id, token_hash, expires_at) VALUES ($1,$2,$3)', [userId, hashToken(token), expires]);
-  reply.setCookie(COOKIE, token, { httpOnly: true, sameSite: 'lax', secure: isProd, path: '/', expires });
+  reply.setCookie(COOKIE, token, { httpOnly: true, sameSite: 'lax', secure: isProd || config.WEB_ORIGIN.startsWith('https'), path: '/', expires });
 }
 
 export async function loadUser(req: FastifyRequest) {

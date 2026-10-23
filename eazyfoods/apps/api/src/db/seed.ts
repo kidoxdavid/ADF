@@ -160,7 +160,9 @@ export async function seed(log = console.log) {
          VALUES ($1,$2,$3,$4,$5,$6,'000-000-0000','published',true,2500) ON CONFLICT (slug) DO UPDATE SET name=$3 RETURNING id`,
         [v, s.slug, s.name, 'TEST DATA - not a real store.', s.address, s.postal])).rows[0].id;
       await c.query('DELETE FROM store_hours WHERE store_id=$1', [st]);
-      for (let d = 0; d < 7; d++) await c.query(`INSERT INTO store_hours VALUES ($1,$2,'09:00','21:00')`, [st, d]);
+      // DEMO_ALWAYS_OPEN=1 keeps demo stores open around the clock so a hosted demo can always be tried.
+      const [o, cl] = process.env.DEMO_ALWAYS_OPEN === '1' ? ['00:00', '23:59:59'] : ['09:00', '21:00'];
+      for (let d = 0; d < 7; d++) await c.query(`INSERT INTO store_hours VALUES ($1,$2,$3,$4)`, [st, d, o, cl]);
       for (const r of s.regions) await c.query('INSERT INTO store_regions VALUES ($1,$2) ON CONFLICT DO NOTHING', [st, regionId[r]]);
       // Each store stocks a different subset at different (invented) prices.
       for (const [pi, slug] of slugs.entries()) {

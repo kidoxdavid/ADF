@@ -1,0 +1,28 @@
+# One-click hosting blueprint (Render). A private DEMO with invented data and a mock payment provider: no real money moves.
+databases:
+  - name: eazyfoods-db
+    databaseName: eazyfoods
+    plan: free
+
+services:
+  - type: web
+    name: eazyfoods
+    runtime: node
+    rootDir: eazyfoods
+    plan: free
+    buildCommand: npm ci && npm run build
+    startCommand: npm run migrate && npm run seed && npm -w apps/api run start
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase: { name: eazyfoods-db, property: connectionString }
+      - key: NODE_ENV
+        value: development        # demo only: allows the mock payment provider. Never use for a real launch.
+      - key: PAYMENT_PROVIDER
+        value: mock
+      - key: DEMO_ALWAYS_OPEN
+        value: "1"
+      - key: WEB_ORIGIN
+        value: https://eazyfoods.onrender.com
+      - key: NODE_VERSION
+        value: "22"

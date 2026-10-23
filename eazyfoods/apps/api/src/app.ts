@@ -24,6 +24,9 @@ import { uploadRoutes } from './routes/uploads.js';
 import multipart from '@fastify/multipart';
 import fastifyStatic from '@fastify/static';
 import { publicDir } from './lib/storage.js';
+import { existsSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { cartRoutes } from './routes/cart.js';
 import { accountRoutes } from './routes/account.js';
 import { orderRoutes } from './routes/orders.js';
@@ -48,7 +51,9 @@ export async function buildApp() {
   app.addHook('onRequest', async (req, reply) => {
     if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return;
     const origin = req.headers.origin;
-    if (origin && origin !== config.WEB_ORIGIN) return reply.code(403).send({ error: 'bad_origin' });
+    // Allowed: the configured site origin, or a request from the same host that served the page (single-host deployments).
+    const sameHost = (() => { try { return !!origin && new URL(origin).host === String(req.headers['x-forwarded-host'] ?? req.headers.host); } catch { return false; } })();
+    if (origin && origin !== config.WEB_ORIGIN && !sameHost) return reply.code(403).send({ error: 'bad_origin' });
   });
 
   app.setErrorHandler((err: any, req, reply) => {
@@ -91,5 +96,15 @@ export async function buildApp() {
   await app.register(recipeRoutes, { prefix: '/api' });
   await app.register(adRoutes, { prefix: '/api' });
   await app.register(uploadRoutes, { prefix: '/api' });
+
+  // Single-host deployment: serve the built web app (and its client-side routes) from the API when it has been built.
+  const dist = resolve(dirname(fileURLToPath(import.meta.url)), '../../web/dist');
+  if (existsSync(join(dist, 'index.html'))) {
+    await app.register(fastifyStatic, { root: dist, prefix: '/', wildcard: false, index: false, maxAge: '1h' });
+    app.setNotFoundHandler((req, reply) => {
+      if (req.method === 'GET' && !req.url.startsWith('/api') && !req.url.startsWith('/uploads')) return reply.type('text/html').sendFile('index.html');
+      return reply.code(404).send({ error: 'not_found' });
+    });
+  }
   return app;
 }
