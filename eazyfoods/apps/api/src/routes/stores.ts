@@ -22,11 +22,11 @@ export const storeRoutes: FastifyPluginAsync = async (app) => {
       pool.query('SELECT dow, opens, closes FROM store_hours WHERE store_id = $1 ORDER BY dow, opens', [s.id]),
       pool.query('SELECT r.slug, r.name FROM store_regions sr JOIN regions r ON r.id = sr.region_id WHERE sr.store_id = $1', [s.id]),
       pool.query(
-        `SELECT p.slug, p.name, p.pack_size, p.pack_unit, b.name AS brand, o.id AS offer_id, o.price_cents, o.compare_at_cents, o.on_promotion,
+        `SELECT p.slug, p.name, p.pack_size, p.pack_unit, b.name AS brand, c.name AS category, c.slug AS category_slug, o.id AS offer_id, o.price_cents, o.compare_at_cents, o.on_promotion,
                 (SELECT url FROM product_images WHERE product_id = p.id ORDER BY sort_order LIMIT 1) AS image_url,
                 (o.stock_on_hand - o.stock_reserved) > 0 AS in_stock, GREATEST(o.stock_on_hand - o.stock_reserved, 0) AS available
            FROM offers_live o JOIN products p ON p.id = o.product_id AND p.status = 'published'
-           LEFT JOIN brands b ON b.id = p.brand_id
+           LEFT JOIN brands b ON b.id = p.brand_id LEFT JOIN categories c ON c.id = p.category_id
           WHERE o.store_id = $1 AND o.is_active ORDER BY p.name`, [s.id]),
     ]);
     return {

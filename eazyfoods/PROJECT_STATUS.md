@@ -5,12 +5,15 @@ _Last updated: 2026-10-23 · Branch `build/eazyfoods-full`_
 ## Verified today (run, not assumed)
 | Check | Result |
 |---|---|
-| API integration tests (real Postgres) | **68 passed** |
+| API integration tests (real Postgres) | **70 passed** |
 | Browser end-to-end + quality suite (real Chromium, real API/DB) | **23 passed**: 12 cross-role journeys, no horizontal overflow at 360/390/768/1280 px on every public, signed-in and portal page, axe WCAG 2 A/AA: no serious/critical violations (light, dark, portals) |
 | `tsc` (api + web), production web build | clean |
 | `npm audit --omit=dev` | 0 vulnerabilities |
 
 Journeys covered end to end in the browser: find a store by region; search by alternative name; basket; validated checkout; **declined payment leaves no paid order**; successful signed payment; vendor accepts/ready; dispatcher assigns; driver delivers with the handover code (wrong code refused); customer review; support requests + finance approves a refund with the ledger netting to zero; vendor price edit shows on storefront; stale basket cannot buy sold-out stock; role/ownership access control; admin verifies and approves a vendor.
+
+## Storefront redesign
+Retail-style layout (see docs/DESIGN.md): department header, hero carousel, quad tiles, shelves, facets, buy box, illustrated pack shots. Verified with the same browser suite (journeys, overflow at 4 widths, axe in light and dark).
 
 ## Built
 Customer: regional discovery, search (typo + verified aliases), catalogue, stores, basket (guest merge), checkout (delivery/pickup, zones, fees, GST, coupons, multi-store disclosure), payment step, order tracking and timeline, substitutions, cancellation, issue reports, reviews, reorder, favourites, recipes-to-basket, account (addresses, consent, export, deletion), password reset, email verification, policy pages.

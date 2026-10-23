@@ -23,7 +23,7 @@ describe('search', () => {
   });
 
   it('matches by brand', async () => {
-    expect((await search('q=iwisa')).results.map((x: any) => x.slug)).toContain('mielie-meal-maize-meal');
+    expect((await search('q=sunrise')).results.map((x: any) => x.slug)).toContain('mielie-meal-maize-meal');
   });
 
   it('filters by region via culinary association', async () => {
@@ -67,5 +67,27 @@ describe('search', () => {
   it('suggest endpoint offers alias hits', async () => {
     const r = (await app.inject({ url: '/api/search/suggest?q=pond' })).json();
     expect(r.some((x: any) => x.slug === 'cassava-leaves-frozen' && x.via === 'Pondu')).toBe(true);
+  });
+});
+
+describe('storefront feeds', () => {
+  it('deals, new arrivals, related products and facets return usable data', async () => {
+    const deals = (await app.inject({ url: '/api/deals' })).json();
+    expect(deals.length).toBeGreaterThan(0);
+    expect(deals.every((d: any) => d.on_sale && d.in_stock)).toBe(true);
+    const fresh = (await app.inject({ url: '/api/new-arrivals' })).json();
+    expect(fresh.length).toBeGreaterThan(5);
+    const rel = (await app.inject({ url: '/api/products/garri-white/related' })).json();
+    expect(rel.map((r: any) => r.slug)).not.toContain('garri-white');
+    expect(rel.length).toBeGreaterThan(0);
+    const s = (await app.inject({ url: '/api/search?region=west-africa' })).json();
+    expect(s.facets.categories.length).toBeGreaterThan(2);
+    expect(s.facets.stores.length).toBeGreaterThan(0);
+    expect(s.results[0]).toHaveProperty('rating_avg');
+  });
+  it('service-area lookup says whether we deliver to a postal area', async () => {
+    expect((await app.inject({ url: '/api/service-area?postal=T2A 0A0' })).json()).toMatchObject({ serviceable: true, zone: 'Calgary' });
+    expect((await app.inject({ url: '/api/service-area?postal=V6B1A1' })).json().serviceable).toBe(false);
+    expect((await app.inject({ url: '/api/service-area?postal=nope' })).statusCode).toBe(400);
   });
 });

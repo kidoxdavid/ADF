@@ -1,19 +1,27 @@
 import { Link } from 'react-router-dom';
-import { type ProductCard, type Region, type StoreCard } from '../api';
+import { type Region, type StoreCard } from '../api';
 import { useApi } from '../hooks';
+import { ProductArt } from '../art';
+import { Shelf, StoreList, type Card } from '../cards';
+import { HeroCarousel, type Slide } from '../carousel';
 import { ErrorBox, Loading, Notice } from '../ui';
-import { ProductGrid, StoreList, useAdImpression } from '../cards';
+import { IconShield, IconStore, IconSwap, IconTruck, IconBook } from '../icons';
 import { post } from '../api';
+import { useAdImpression } from '../cards';
 
-function CollectionRow({ slug }: { slug: string }) {
-  const { data } = useApi<{ collection: { title: string; subtitle: string }; products: ProductCard[] }>(`/collections/${slug}`);
-  if (!data || !data.products.length) return null;
+type Search = { results: Card[] };
+const REGION_COLOURS: [string, string][] = [['#0f5a3a', '#1f8f5b'], ['#a3470f', '#e08a1e'], ['#254e8f', '#4a86d4'], ['#7a2e5d', '#b4508a'], ['#136f63', '#2bb3a1'], ['#8c2f39', '#d4564a']];
+
+function RegionQuad({ r }: { r: Region }) {
+  const { data } = useApi<Search>(`/search?region=${r.slug}&in_stock=1`);
+  const items = data?.results.slice(0, 4) ?? [];
+  if (data && !items.length) return null;
   return (
-    <section aria-labelledby={`h-${slug}`}>
-      <div className="row between"><h2 id={`h-${slug}`}>{data.collection.title}</h2><Link to={`/c/${slug}`}>See all</Link></div>
-      <p className="muted" style={{ marginTop: 0 }}>{data.collection.subtitle}</p>
-      <ProductGrid products={data.products.slice(0, 5)} />
-    </section>
+    <Link to={`/search?region=${r.slug}`} className="quad">
+      <h3>Shop {r.name} groceries</h3>
+      <div className="quad-grid">{(items.length ? items : Array.from({ length: 4 }, () => null)).map((p, i) => <div key={i}>{p ? <ProductArt name={p.name} brand={p.brand} category={p.category_slug ?? p.category} /> : null}</div>)}</div>
+      <span className="go">See all {r.name.split(' ')[0]} products</span>
+    </Link>
   );
 }
 
@@ -30,60 +38,78 @@ function HomeBanner() {
   );
 }
 
+function CollectionShelf({ slug }: { slug: string }) {
+  const { data } = useApi<{ collection: { title: string; subtitle: string }; products: Card[] }>(`/collections/${slug}`);
+  if (!data?.products.length) return null;
+  return <Shelf title={data.collection.title} subtitle={data.collection.subtitle} to={`/c/${slug}`} items={data.products} />;
+}
+
 export function Home() {
   const content = useApi<{ home_hero?: { title: string; subtitle: string } }>('/content/home');
   const regions = useApi<Region[]>('/regions');
   const stores = useApi<StoreCard[]>('/stores');
   const cols = useApi<{ slug: string }[]>('/collections');
+  const deals = useApi<Card[]>('/deals');
+  const fresh = useApi<Card[]>('/new-arrivals');
+  const cats = useApi<{ slug: string; name: string }[]>('/categories');
   const recipes = useApi<{ slug: string; title: string; summary: string }[]>('/recipes');
+  const featured = useApi<Search>('/search?in_stock=1&sort=price_desc');
+  const eastSearch = useApi<Search>(`/search?region=${regions.data?.[1]?.slug ?? 'east-africa'}&in_stock=1`);
   const hero = content.data?.home_hero;
+  const east = regions.data?.[1];
+
+  const slides: Slide[] = [];
+  if (featured.data) slides.push({ id: 'welcome', from: '#0b3a24', to: '#1d7a4c', eyebrow: 'Calgary · African groceries', title: (hero?.title ?? 'African groceries, from the stores you trust.').replace('\n', ' '), text: hero?.subtitle ?? 'Compare each store’s own price and stock, then have it delivered.', cta: { to: '/search', label: 'Start shopping' }, art: featured.data.results });
+  if (deals.data?.length) slides.push({ id: 'deals', from: '#b8260f', to: '#f0701f', eyebrow: 'Weekly deals', title: 'Save on pantry staples this week', text: 'Live promotions from local stores, priced as you’ll pay.', cta: { to: '/deals', label: 'Shop deals' }, art: deals.data });
+  if (east && eastSearch.data?.results.length) slides.push({ id: 'east', from: '#7a3a0b', to: '#d98b1f', eyebrow: east.name, title: `Discover ${east.name.replace(' Africa', '')} African ingredients`, text: east.countries.slice(0, 4).map((c) => c.name).join(' · '), cta: { to: `/search?region=${east.slug}`, label: `Shop ${east.name}` }, art: eastSearch.data.results });
+  if (recipes.data?.length && featured.data) slides.push({ id: 'cook', from: '#3b2a6b', to: '#7a4bb8', eyebrow: 'Cook tonight', title: recipes.data[0].title, text: 'Add the ingredients that are in stock to your basket in one tap.', cta: { to: `/recipes`, label: 'See recipes' }, art: [...featured.data.results].reverse() });
+
   return (
     <>
-      <section className="hero">
-        <h1>{hero?.title ?? 'African groceries, from the stores you trust.'}</h1>
-        <p>{hero?.subtitle ?? 'Browse Calgary’s African grocers by region. Compare each store’s own price and stock, then have it delivered.'}</p>
-        <div className="row wrap"><Link to="/search" className="btn primary lg">Browse products</Link><Link to="/stores" className="btn secondary lg">See stores</Link></div>
-      </section>
+      {slides.length ? <HeroCarousel slides={slides} /> : <Loading />}
+      {stores.data?.some((s) => s.is_test_data) && <Notice tone="warn"><strong>Development data.</strong> Stores marked “Demo store” are invented for testing and are not real businesses. Product pictures are illustrations until stores upload photos.</Notice>}
       <HomeBanner />
-      {stores.data?.some((s) => s.is_test_data) && <Notice tone="warn"><strong>Development data.</strong> Stores marked “Demo store” are invented for testing and are not real businesses. No real orders can be placed.</Notice>}
-      <section aria-labelledby="regions-h">
-        <h2 id="regions-h">Shop by region</h2>
-        {regions.loading && <Loading />}
-        {regions.error && <ErrorBox message={regions.error} retry={regions.reload} />}
-        <ul className="cards regions" role="list">
-          {regions.data?.map((r) => (
-            <li key={r.slug}>
-              <Link to={`/search?region=${r.slug}`} className="card region">
-                <h3>{r.name}</h3>
-                <span className="muted small">{r.countries.slice(0, 3).map((c) => c.name).join(', ')}{r.countries.length > 3 ? ` +${r.countries.length - 3} more` : ''}</span>
-              </Link>
-            </li>
-          ))}
-        </ul>
+      {regions.error && <ErrorBox message={regions.error} retry={regions.reload} />}
+      <div className="quads">{regions.data?.slice(0, 4).map((r) => <RegionQuad key={r.slug} r={r} />)}</div>
+
+      <Shelf title="Today’s deals" subtitle="Live promotions — the price shown is what you pay" to="/deals" items={deals.data ?? []} />
+
+      <section className="block" aria-labelledby="dept-h">
+        <h2 id="dept-h">Shop by department</h2>
+        <ul className="depts" role="list">{cats.data?.map((c) => <CatTile key={c.slug} slug={c.slug} name={c.name} />)}</ul>
       </section>
-      {cols.data?.slice(0, 3).map((c) => <CollectionRow key={c.slug} slug={c.slug} />)}
-      <section aria-labelledby="stores-h">
-        <div className="row between"><h2 id="stores-h">Stores near you</h2><Link to="/stores">All stores</Link></div>
-        {stores.loading && <Loading />}
-        {stores.error && <ErrorBox message={stores.error} retry={stores.reload} />}
+
+      {cols.data?.slice(0, 2).map((c) => <CollectionShelf key={c.slug} slug={c.slug} />)}
+      <Shelf title="New arrivals" subtitle="Just added to the catalogue" to="/new" items={fresh.data ?? []} />
+      {cols.data?.slice(2, 4).map((c) => <CollectionShelf key={c.slug} slug={c.slug} />)}
+
+      <section className="block" aria-labelledby="stores-h">
+        <div className="shelf-head"><h2 id="stores-h">Stores near you</h2><Link to="/stores" className="seeall">All stores</Link></div>
+        {stores.loading && <Loading />}{stores.error && <ErrorBox message={stores.error} retry={stores.reload} />}
         {stores.data && <StoreList stores={stores.data} />}
       </section>
+
       {!!recipes.data?.length && (
-        <section aria-labelledby="rec-h">
-          <div className="row between"><h2 id="rec-h">Cook something</h2><Link to="/recipes">All recipes</Link></div>
-          <ul className="cards stores" role="list">
-            {recipes.data.slice(0, 3).map((r) => <li key={r.slug}><Link to={`/recipes/${r.slug}`} className="card"><div className="card-body" style={{ padding: 14 }}><h3>{r.title}</h3><span className="muted small">{r.summary}</span></div></Link></li>)}
-          </ul>
+        <section className="block" aria-labelledby="rec-h">
+          <div className="shelf-head"><div><h2 id="rec-h">Cook something tonight</h2><p className="muted">Recipes linked to what’s in stock.</p></div><Link to="/recipes" className="seeall">All recipes</Link></div>
+          <ul className="recipe-tiles" role="list">{recipes.data.slice(0, 4).map((r, i) => <li key={r.slug}><Link to={`/recipes/${r.slug}`} className="rtile" style={{ background: `linear-gradient(135deg, ${REGION_COLOURS[i % 6][0]}, ${REGION_COLOURS[i % 6][1]})` }}><h3>{r.title}</h3><p>{r.summary}</p></Link></li>)}</ul>
         </section>
       )}
-      <section aria-labelledby="trust-h">
-        <h2 id="trust-h">How shopping here works</h2>
-        <div className="grid cols-3">
-          <div className="panel"><h3>Each store sets its own price</h3><p className="muted">You see every store’s price and stock side by side before you choose.</p></div>
-          <div className="panel"><h3>One delivery per store</h3><p className="muted">If your basket spans stores, each store delivers separately. We show the fee for each before you pay.</p></div>
-          <div className="panel"><h3>If something’s wrong</h3><p className="muted">Report a missing or damaged item from your order. You are never charged for an unapproved replacement. <Link to="/pages/refund-policy">Read the policy</Link>.</p></div>
-        </div>
-      </section>
+
+      <div className="trust">
+        <div><IconStore /><span><b>Local African grocers</b>Real stores, each with its own stock and prices.</span></div>
+        <div><IconSwap /><span><b>Compare stores</b>See every store’s price side by side.</span></div>
+        <div><IconTruck /><span><b>Delivery you can see</b>Fees and times shown per store before you pay.</span></div>
+        <div><IconShield /><span><b>Help when it goes wrong</b>Report a problem and we’ll make it right. <Link to="/pages/refund-policy">Policy</Link></span></div>
+      </div>
+      <span hidden><IconBook /></span>
     </>
   );
+}
+
+function CatTile({ slug, name }: { slug: string; name: string }) {
+  const { data } = useApi<Search>(`/search?category=${slug}&in_stock=1`);
+  const p = data?.results[0];
+  if (data && !p) return null;
+  return <li><Link to={`/search?category=${slug}`} className="dept"><div>{p && <ProductArt name={p.name} brand={p.brand} category={p.category_slug ?? p.category} />}</div>{name.replace(' & ', ' & ')}</Link></li>;
 }

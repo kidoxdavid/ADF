@@ -3,6 +3,7 @@ import { Link, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './auth';
 import { CartProvider } from './cart';
 import { ToastProvider } from './toast';
+import { PlaceProvider } from './place';
 import { Footer, Header, TabBar } from './shell';
 import { Empty, Loading } from './ui';
 import { RequireAuth } from './guard';
@@ -10,7 +11,7 @@ import { Home } from './pages/Home';
 import { SearchPage } from './pages/Search';
 import { ProductPage } from './pages/Product';
 import { StorePage, StoresPage } from './pages/Store';
-import { CollectionPage } from './pages/Collection';
+import { CollectionPage, FeedPage } from './pages/Collection';
 import { CartPage } from './pages/Cart';
 import { CheckoutPage } from './pages/Checkout';
 import { OrdersPage, OrderPage } from './pages/Orders';
@@ -38,6 +39,7 @@ export function App() {
     <ToastProvider>
       <AuthProvider>
         <CartProvider>
+         <PlaceProvider>
           <Suspense fallback={<div className="wrap"><Loading /></div>}>
             <Routes>
               <Route path="/vendor/*" element={<RequireAuth><Vendor /></RequireAuth>} />
@@ -48,6 +50,8 @@ export function App() {
                   <Routes>
                     <Route path="/" element={<Home />} />
                     <Route path="/search" element={<SearchPage />} />
+                    <Route path="/deals" element={<FeedPage title="Weekly deals" sub="Live promotions from stores. Prices shown are what you pay." path="/deals" empty="No promotions are running right now." />} />
+                    <Route path="/new" element={<FeedPage title="New arrivals" sub="Recently added to the catalogue." path="/new-arrivals" empty="Nothing new yet." />} />
                     <Route path="/stores" element={<StoresPage />} />
                     <Route path="/s/:slug" element={<StorePage />} />
                     <Route path="/c/:slug" element={<CollectionPage />} />
@@ -71,6 +75,7 @@ export function App() {
               } />
             </Routes>
           </Suspense>
+         </PlaceProvider>
         </CartProvider>
       </AuthProvider>
     </ToastProvider>

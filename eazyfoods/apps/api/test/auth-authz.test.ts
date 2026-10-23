@@ -99,7 +99,7 @@ describe('inventory integrity', () => {
     const { cookie } = await login('owner2@example.test');
     const sid = await storeId('demo-horn-spice-grocer');
     const pid = await productId('berbere-spice-blend');
-    await pool.query(`UPDATE store_offers SET stock_on_hand=10, stock_reserved=0 WHERE store_id=$1 AND product_id=$2`, [sid, pid]);
+    await pool.query(`INSERT INTO store_offers(store_id, product_id, price_cents, stock_on_hand, stock_reserved) VALUES ($1,$2,500,10,0) ON CONFLICT (store_id, product_id) DO UPDATE SET stock_on_hand=10, stock_reserved=0`, [sid, pid]);
     const calls = Array.from({ length: 20 }, () =>
       app.inject({ method: 'POST', url: `/api/vendor/stores/${sid}/offers/${pid}/stock`, headers: { cookie }, payload: { delta: -1, reason: 'damage' } }));
     const results = await Promise.all(calls);
@@ -113,7 +113,7 @@ describe('inventory integrity', () => {
     const { cookie } = await login('owner2@example.test');
     const sid = await storeId('demo-horn-spice-grocer');
     const pid = await productId('teff-flour-ivory');
-    await pool.query(`UPDATE store_offers SET stock_on_hand=5, stock_reserved=4 WHERE store_id=$1 AND product_id=$2`, [sid, pid]);
+    await pool.query(`INSERT INTO store_offers(store_id, product_id, price_cents, stock_on_hand, stock_reserved) VALUES ($1,$2,500,5,4) ON CONFLICT (store_id, product_id) DO UPDATE SET stock_on_hand=5, stock_reserved=4`, [sid, pid]);
     const r = await app.inject({ method: 'POST', url: `/api/vendor/stores/${sid}/offers/${pid}/stock`, headers: { cookie }, payload: { delta: -3, reason: 'correction' } });
     expect(r.statusCode).toBe(409);
   });

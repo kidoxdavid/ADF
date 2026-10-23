@@ -54,6 +54,7 @@ All paths are under the API origin. Bodies are JSON and validated with zod; erro
 | GET | `/api/config` | public | payments.ts |
 | GET | `/api/config` | public | payments.ts |
 | GET | `/api/content/home` | public | content.ts |
+| GET | `/api/deals` | public | catalogue.ts |
 | POST | `/api/dev/orders/:id/simulate-payment` | signed in | payments.ts |
 | POST | `/api/dev/orders/:id/simulate-payment` | signed in | payments.ts |
 | POST | `/api/events` | public | engagement.ts |
@@ -61,6 +62,7 @@ All paths are under the API origin. Bodies are JSON and validated with zod; erro
 | DELETE | `/api/favourites/:slug` | signed in | engagement.ts |
 | GET | `/api/favourites/:slug` | signed in | engagement.ts |
 | PUT | `/api/favourites/:slug` | signed in | engagement.ts |
+| GET | `/api/new-arrivals` | public | catalogue.ts |
 | GET | `/api/orders` | signed in | orders.ts |
 | GET | `/api/orders/:id` | signed in | orders.ts |
 | POST | `/api/orders/:id/issues` | signed in | support.ts |
@@ -72,6 +74,7 @@ All paths are under the API origin. Bodies are JSON and validated with zod; erro
 | GET | `/api/pages` | public | content.ts |
 | GET | `/api/pages/:slug` | public | content.ts |
 | GET | `/api/products/:slug` | public | catalogue.ts |
+| GET | `/api/products/:slug/related` | public | catalogue.ts |
 | GET | `/api/products/:slug/reviews` | public | engagement.ts |
 | GET | `/api/recipes` | public | recipes.ts |
 | GET | `/api/recipes/:slug` | public | recipes.ts |
@@ -79,6 +82,7 @@ All paths are under the API origin. Bodies are JSON and validated with zod; erro
 | GET | `/api/regions` | public | catalogue.ts |
 | GET | `/api/search` | public | search.ts |
 | GET | `/api/search/suggest` | public | search.ts |
+| GET | `/api/service-area` | public | catalogue.ts |
 | GET | `/api/stores` | public | stores.ts |
 | GET | `/api/stores/:slug` | public | stores.ts |
 | GET | `/api/stores/:slug/reviews` | public | engagement.ts |
@@ -217,4 +221,4 @@ All paths are under the API origin. Bodies are JSON and validated with zod; erro
 | GET | `/api/vendor/support` | signed in | support.ts |
 | POST | `/api/vendor/support` | signed in | support.ts |
 
-193 endpoints.
+197 endpoints.

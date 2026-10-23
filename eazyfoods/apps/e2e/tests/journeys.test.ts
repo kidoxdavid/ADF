@@ -21,16 +21,16 @@ describe('customer -> store -> dispatch -> driver -> review, on a phone', () => 
   it('a new customer finds a store by region, searches by an alternative name, and sees the verified alias', async () => {
     const { page, errors } = await newPage(browser, MOBILE);
     await page.goto(base());
-    await page.locator('.region-nav').getByRole('link', { name: 'West Africa' }).click();              // region entry point
-    await page.waitForSelector('.cards a');
+    await page.locator('.hdr-nav').getByRole('link', { name: 'West Africa' }).click();              // region entry point
+    await page.waitForSelector('.pgrid .pcard');
     expect(page.url()).toContain('region=west-africa');
     await page.goto(`${base()}/stores`);
-    const card = page.locator('.cards.stores a', { hasText: 'Demo West African Market' });
+    const card = page.locator('.sgrid a.stile', { hasText: 'Demo West African Market' });
     await seeText(card, 'West Africa');                                                // store card shows its regional specialty
     await card.click();
     await page.waitForSelector('h1:has-text("Demo West African Market")');
     await page.goto(`${base()}/search?q=pondu`);                                                    // alternative name for cassava leaves
-    const hit = page.locator('.cards a', { hasText: 'Cassava Leaves' });
+    const hit = page.locator('.pgrid .pcard', { hasText: 'Cassava Leaves' });
     await visible(hit);
     await seeText(hit, 'Also known as “Pondu”');
     expect(errors).toEqual([]);
@@ -43,13 +43,13 @@ describe('customer -> store -> dispatch -> driver -> review, on a phone', () => 
     await page.click('.auth button[type=submit]');
     await page.waitForURL(base() + '/');
     await page.goto(`${base()}/s/${S1}`);
-    const add = (name: string) => page.locator('li .card', { hasText: name }).getByRole('button', { name: /^Add/ });
+    const add = (name: string) => page.locator('.pgrid .pcard', { hasText: name }).getByRole('button', { name: /^Add /, exact: false }).first();
     await add('Garri (White)').click();
-    await page.locator('li .card', { hasText: 'Garri (White)' }).getByRole('button', { name: /Add one/ }).click();   // quantity 2
+    await page.locator('.pgrid .pcard', { hasText: 'Garri (White)' }).getByRole('button', { name: /Add one/ }).click();   // quantity 2
     await add('Plantain Chips').click();
     await page.getByRole('link', { name: 'View basket' }).click();
     await seeText(page.locator('main'), '$50.00');                                                    // 2 x $20 + $10
-    await page.getByRole('link', { name: /^Checkout/ }).click();
+    await page.getByRole('link', { name: /Proceed to checkout/ }).click();
     await page.waitForSelector('.checkout');
     await addressForm(page);
     await page.waitForSelector('.choice.selected input[name=addr]');
@@ -70,7 +70,7 @@ describe('customer -> store -> dispatch -> driver -> review, on a phone', () => 
     const { page } = await newPage(browser, MOBILE);
     await signIn(page, email, 'a-long-password');
     await page.goto(`${base()}/cart`);
-    await page.getByRole('link', { name: /^Checkout/ }).click();
+    await page.getByRole('link', { name: /Proceed to checkout/ }).click();
     await page.waitForSelector('.choice.selected input[name=addr]');
     await page.getByRole('button', { name: /Continue to payment/ }).click();
     await page.getByRole('button', { name: 'Simulate successful payment' }).click();
@@ -181,7 +181,7 @@ describe('inventory, stale baskets and access control', () => {
     await page.waitForTimeout(600);
     const sf = await newPage(browser, MOBILE);
     await sf.page.goto(`${base()}/p/garri-white`);
-    await seeText(sf.page.locator('.offer-row', { hasText: 'Demo West African Market' }), '$21.50');
+    await seeText(sf.page.locator('.compare tr', { hasText: 'Demo West African Market' }), '$21.50');
     await setOffer(S1, 'garri-white', 2000, 20);
   });
 
@@ -192,8 +192,9 @@ describe('inventory, stale baskets and access control', () => {
     await page.goto(`${base()}/register`);
     await page.fill('input[name=full_name]', 'Stale Basket'); await page.fill('input[name=email]', email); await page.fill('input[name=password]', 'a-long-password');
     await page.click('.auth button[type=submit]'); await page.waitForURL(base() + '/');
+    const c0 = await db(); await c0.query(`DELETE FROM cart_items WHERE offer_id IN (SELECT id FROM store_offers WHERE product_id=(SELECT id FROM products WHERE slug='egusi-ground-melon-seeds'))`); await c0.query(`UPDATE store_offers SET is_active=false WHERE product_id=(SELECT id FROM products WHERE slug='egusi-ground-melon-seeds') AND store_id<>(SELECT id FROM stores WHERE slug=$1)`, [S1]); await c0.end();
     await page.goto(`${base()}/p/egusi-ground-melon-seeds`);
-    await page.locator('.offer-row', { hasText: 'Demo West African Market' }).getByRole('button', { name: /^Add/ }).click();
+    await page.locator('.buybox').getByRole('button', { name: /^Add / }).click();
     await page.goto(`${base()}/checkout`);
     await page.waitForSelector('.checkout');
     await addressForm(page);

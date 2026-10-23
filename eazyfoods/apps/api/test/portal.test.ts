@@ -75,24 +75,24 @@ describe('vendor onboarding to publication', () => {
 describe('catalogue management', () => {
   it('vendor suggestions stay hidden until moderated; aliases only search once verified', async () => {
     const owner = await who('owner1@example.test'), admin = await who('owner@example.test');
-    const s = await call(owner, 'POST', '/api/vendor/products/suggest', { name: 'Zobo Hibiscus Leaves', pack_size: 100, pack_unit: 'g', country_slugs: ['nigeria'] });
+    const s = await call(owner, 'POST', '/api/vendor/products/suggest', { name: 'Baobab Fruit Powder', pack_size: 100, pack_unit: 'g', country_slugs: ['nigeria'] });
     expect(s.status).toBe(201);
     expect(s.body.status).toBe('pending');
     const found = async (q: string) => (await call(null, 'GET', `/api/search?q=${q}`)).body.results.map((r: any) => r.slug);
-    expect(await found('zobo')).toEqual([]);
+    expect(await found('baobab')).toEqual([]);
     expect((await call(owner, 'PATCH', `/api/admin/products/${s.body.id}`, { status: 'published' })).status).toBe(403);   // vendors cannot publish
     const pid = s.body.id;
     expect((await call(admin, 'PATCH', `/api/admin/products/${pid}`, { status: 'published' })).status).toBe(200);
     const storeId = (await pool.query('SELECT id FROM stores WHERE slug=$1', [S1])).rows[0].id;
     expect((await call(owner, 'PUT', `/api/vendor/stores/${storeId}/offers/${pid}`, { price_cents: 650 })).status).toBe(200);
-    expect(await found('zobo')).toContain('zobo-hibiscus-leaves');
+    expect(await found('baobab')).toContain('baobab-fruit-powder');
     // alias: unverified is invisible, verified is searchable, un-verifying hides it again
-    const al = await call(admin, 'POST', `/api/admin/products/${pid}/aliases`, { alias: 'Sorrel', verified: false });
-    expect(await found('sorrel')).toEqual([]);
+    const al = await call(admin, 'POST', `/api/admin/products/${pid}/aliases`, { alias: 'Monkey bread', verified: false });
+    expect(await found('monkey bread')).toEqual([]);
     await call(admin, 'PATCH', `/api/admin/aliases/${al.body.id}`, { verified: true });
-    expect(await found('sorrel')).toContain('zobo-hibiscus-leaves');
+    expect(await found('monkey bread')).toContain('baobab-fruit-powder');
     await call(admin, 'PATCH', `/api/admin/aliases/${al.body.id}`, { verified: false });
-    expect(await found('sorrel')).toEqual([]);
+    expect(await found('monkey bread')).toEqual([]);
     // images must be ones we issued
     expect((await call(admin, 'POST', `/api/admin/products/${pid}/images`, { url: 'https://evil.example/x.jpg', alt: 'x' })).status).toBe(400);
     // duplicate barcode is refused

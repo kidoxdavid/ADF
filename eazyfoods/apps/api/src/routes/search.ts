@@ -49,7 +49,9 @@ export const searchRoutes: FastifyPluginAsync = async (app) => {
       ), listing AS (
         SELECT p.slug, p.name, p.pack_size, p.pack_unit, b.name AS brand, c.name AS category,
                (SELECT url FROM product_images WHERE product_id = p.id ORDER BY sort_order LIMIT 1) AS image_url, p.id AS product_id,
-               r.score, r.matched_alias, off.min_price, off.store_count, off.in_stock
+               r.score, r.matched_alias, off.min_price, off.was_price, off.on_sale, off.store_count, off.in_stock, off.offer_id, off.store_name, off.store_slug, off.available, c.slug AS category_slug,
+               (SELECT CASE WHEN count(*) >= 3 THEN round(avg(rv.rating)::numeric, 1)::float END FROM reviews rv WHERE rv.product_id = p.id AND NOT rv.is_hidden) AS rating_avg,
+               (SELECT count(*)::int FROM reviews rv WHERE rv.product_id = p.id AND NOT rv.is_hidden) AS rating_count, p.category_id
           FROM ranked r
           JOIN products p ON p.id = r.id
           LEFT JOIN brands b ON b.id = p.brand_id
@@ -57,7 +59,12 @@ export const searchRoutes: FastifyPluginAsync = async (app) => {
           JOIN LATERAL (
             SELECT COALESCE(min(o.price_cents) FILTER (WHERE o.stock_on_hand - o.stock_reserved > 0), min(o.price_cents)) AS min_price,
                    count(DISTINCT o.store_id) AS store_count,
-                   COALESCE(bool_or(o.stock_on_hand - o.stock_reserved > 0), false) AS in_stock
+                   COALESCE(bool_or(o.stock_on_hand - o.stock_reserved > 0), false) AS in_stock,
+                   COALESCE(bool_or(o.on_promotion), false) AS on_sale, max(o.compare_at_cents) AS was_price,
+                   (array_agg(o.id ORDER BY o.price_cents) FILTER (WHERE o.stock_on_hand - o.stock_reserved > 0))[1] AS offer_id,
+                   (array_agg(s.name ORDER BY o.price_cents) FILTER (WHERE o.stock_on_hand - o.stock_reserved > 0))[1] AS store_name,
+                   (array_agg(s.slug ORDER BY o.price_cents) FILTER (WHERE o.stock_on_hand - o.stock_reserved > 0))[1] AS store_slug,
+                   (array_agg(o.stock_on_hand - o.stock_reserved ORDER BY o.price_cents) FILTER (WHERE o.stock_on_hand - o.stock_reserved > 0))[1] AS available
               FROM offers_live o JOIN storefronts s ON s.id = o.store_id AND s.orderable
              WHERE o.product_id = p.id AND o.is_active
                AND ($6::text IS NULL OR s.slug = $6)
@@ -77,12 +84,14 @@ export const searchRoutes: FastifyPluginAsync = async (app) => {
                 CASE WHEN $10 = 'price_desc' THEN min_price END DESC,
                 CASE WHEN $10 = 'relevance' THEN score END DESC,
                 name
-       LIMIT ${PAGE} OFFSET ${offset}`;
+       LIMIT 500`;
     const { rows } = await pool.query(sql, [
       t, MIN_SCORE, a.region ?? null, a.country ?? null, a.category ?? null, a.store ?? null,
       a.in_stock ? true : null, a.min_price ?? null, a.max_price ?? null, a.sort,
     ]);
     const total = rows[0] ? Number(rows[0].total) : 0;
+    const all = rows;
+    const pageRows = rows.slice(offset, offset + PAGE);
 
     if (t && a.page === 1) {
       pool.query('INSERT INTO search_events(query, result_count, user_id) VALUES ($1,$2,$3)', [t, total, req.user?.id ?? null]).catch((e) => req.log.warn(e));
@@ -98,15 +107,28 @@ export const searchRoutes: FastifyPluginAsync = async (app) => {
     // Sponsored placements: only products that already match the search or filters, clearly labelled, shown first.
     let sponsored: { slug: string; campaign_id: string }[] = [];
     if (a.page === 1 && total > 0) {
-      const ids = rows.map((r) => r.product_id);
+      const ids = pageRows.map((r) => r.product_id);
       sponsored = (await pool.query(
         `SELECT p.slug, a.id AS campaign_id FROM (${LIVE_ADS}) a JOIN products p ON p.id = a.product_id
           WHERE a.placement = 'search_sponsored' AND a.spent_cents < a.budget_cents AND a.product_id = ANY($1::uuid[]) LIMIT 2`, [ids])).rows;
     }
     const spMap = new Map(sponsored.map((s) => [s.slug, s.campaign_id]));
-    const results = rows.map(({ total: _t, product_id: _p, ...r }) => ({ ...r, store_count: Number(r.store_count), sponsored_campaign_id: spMap.get(r.slug) ?? null }));
+    const results = pageRows.map(({ total: _t, product_id: _p, category_id: _cid, ...r }) => ({ ...r, store_count: Number(r.store_count), sponsored_campaign_id: spMap.get(r.slug) ?? null }));
     results.sort((x, y) => Number(!!y.sponsored_campaign_id) - Number(!!x.sponsored_campaign_id));
-    return { query: a.q, total, page: a.page, page_size: PAGE, results, suggestions };
+    // Facet counts over the whole result set (not just this page) so people can narrow down, as on large retail sites.
+    let facets: unknown = undefined;
+    if (total > 0) {
+      const ids = all.map((r) => r.product_id);
+      const [cats, regs, stores, price] = await Promise.all([
+        pool.query(`SELECT c.slug, c.name, count(*)::int AS n FROM products p JOIN categories c ON c.id = p.category_id WHERE p.id = ANY($1::uuid[]) GROUP BY c.slug, c.name ORDER BY n DESC, c.name`, [ids]),
+        pool.query(`SELECT r.slug, r.name, count(DISTINCT pc.product_id)::int AS n FROM product_countries pc JOIN region_countries rc ON rc.country_id = pc.country_id JOIN regions r ON r.id = rc.region_id AND r.is_active
+                     WHERE pc.kind = 'culinary' AND pc.product_id = ANY($1::uuid[]) GROUP BY r.slug, r.name, r.sort_order ORDER BY r.sort_order`, [ids]),
+        pool.query(`SELECT s.slug, s.name, count(DISTINCT o.product_id)::int AS n FROM offers_live o JOIN storefronts s ON s.id = o.store_id AND s.orderable WHERE o.is_active AND o.product_id = ANY($1::uuid[]) GROUP BY s.slug, s.name ORDER BY n DESC`, [ids]),
+        Promise.resolve({ rows: [{ min: Math.min(...all.map((r) => r.min_price)), max: Math.max(...all.map((r) => r.min_price)) }] }),
+      ]);
+      facets = { categories: cats.rows, regions: regs.rows, stores: stores.rows, price: price.rows[0] };
+    }
+    return { query: a.q, total, page: a.page, page_size: PAGE, results, suggestions, facets };
   });
 
   app.get('/search/suggest', async (req) => {

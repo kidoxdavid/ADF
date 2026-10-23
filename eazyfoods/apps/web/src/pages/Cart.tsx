@@ -3,7 +3,8 @@ import { money, packLabel, post } from '../api';
 import { useCart } from '../cart';
 import { useAuth } from '../auth';
 import { useToast } from '../toast';
-import { Badge, Button, Empty, Loading, Notice, Stepper, Thumb } from '../ui';
+import { Badge, Button, Empty, Loading, Notice, Stepper } from '../ui';
+import { ProductArt } from '../art';
 
 export function CartPage() {
   const { me } = useAuth();
@@ -39,6 +40,8 @@ export function CartPage() {
   return (
     <>
       <h1>Your basket</h1>
+      <div className="cart2">
+      <div>
       {cart.separate_deliveries && <Notice tone="warn"><strong>{cart.stores.length} stores, {cart.stores.length} deliveries.</strong> Each store prepares and delivers its own part of your order, with its own delivery fee and arrival time. You will see the fee for each before you pay.</Notice>}
       {priceChanged && <Notice tone="warn">Some prices changed since you added them. <Button variant="secondary" size="sm" onClick={async () => replace(await post('/cart/acknowledge-prices'))}>Accept new prices</Button></Notice>}
       {blockers.length > 0 && <Notice tone="error">Some items are unavailable or low in stock. Fix them below to continue.</Notice>}
@@ -49,7 +52,7 @@ export function CartPage() {
           {!s.is_open && <p className="small warnc">Closed now: you can check out once it opens.</p>}
           {s.items.map((i) => (
             <div key={i.offer_id} className="line">
-              <Thumb name={i.name} />
+              <div className="pimg-s"><ProductArt name={i.name} brand={i.brand} size={packLabel(i)} /></div>
               <div>
                 <Link to={`/p/${i.slug}`} style={{ color: 'inherit', textDecoration: 'none' }}><strong>{i.name}</strong></Link>
                 <div className="muted small">{packLabel(i)} · {money(i.unit_price_cents)}{i.price_changed && <> <Badge tone="warn">was {money(i.previous_price_cents)}</Badge></>}</div>
@@ -66,13 +69,13 @@ export function CartPage() {
           {s.min_order_cents && s.subtotal_cents < s.min_order_cents && <p className="small warnc">This store has a {money(s.min_order_cents)} minimum order. Add {money(s.min_order_cents - s.subtotal_cents)} more.</p>}
         </section>
       ))}
-      <div className="panel">
-        <div className="summary-row total"><span>Items subtotal</span><span>{money(cart.subtotal_cents)}</span></div>
-        <p className="small muted">Delivery fees, tax and any discount are calculated at checkout.</p>
-        <div className="row end" style={{ marginTop: 0 }}>
-          <Button variant="ghost" onClick={async () => { replace(await (await import('../api')).del('/cart')); toast('Basket cleared'); }}>Clear basket</Button>
-          <Link to="/checkout" className={`btn primary lg ${blockers.length ? 'disabled' : ''}`} aria-disabled={blockers.length > 0} onClick={(e) => blockers.length && e.preventDefault()}>Checkout ({count})</Link>
-        </div>
+      </div>
+      <aside className="panel">
+        <div className="summary-row total"><span>Subtotal ({count} item{count === 1 ? '' : 's'})</span><span>{money(cart.subtotal_cents)}</span></div>
+        <p className="small muted">Delivery fees, GST and any discount code are shown at checkout, per store, before you pay.</p>
+        <Link to="/checkout" className={`btn cta lg wide ${blockers.length ? 'disabled' : ''}`} aria-disabled={blockers.length > 0} onClick={(e) => blockers.length && e.preventDefault()}>Proceed to checkout</Link>
+        <div style={{ marginTop: 8 }}><Button variant="ghost" size="sm" onClick={async () => { replace(await (await import('../api')).del('/cart')); toast('Basket cleared'); }}>Clear basket</Button></div>
+      </aside>
       </div>
     </>
   );
