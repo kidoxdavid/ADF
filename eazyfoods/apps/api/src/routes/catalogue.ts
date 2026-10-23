@@ -28,13 +28,13 @@ export const catalogueRoutes: FastifyPluginAsync = async (app) => {
     if (!col) return reply.code(404).send({ error: 'not_found' });
     // Manual items win; otherwise fall back to region/category rules.
     const { rows } = await pool.query(
-      `SELECT p.id, p.slug, p.name, p.pack_size, p.pack_unit, b.name AS brand, off.min_price, off.in_stock
+      `SELECT p.id, p.slug, p.name, p.pack_size, p.pack_unit, b.name AS brand, (SELECT url FROM product_images WHERE product_id = p.id ORDER BY sort_order LIMIT 1) AS image_url, off.min_price, off.in_stock
          FROM products p
          LEFT JOIN brands b ON b.id = p.brand_id
          JOIN LATERAL (
            SELECT COALESCE(min(o.price_cents) FILTER (WHERE o.stock_on_hand - o.stock_reserved > 0), min(o.price_cents)) AS min_price,
                   COALESCE(bool_or(o.stock_on_hand - o.stock_reserved > 0), false) AS in_stock, count(*) AS n
-             FROM store_offers o JOIN storefronts s ON s.id = o.store_id AND s.orderable
+             FROM offers_live o JOIN storefronts s ON s.id = o.store_id AND s.orderable
             WHERE o.product_id = p.id AND o.is_active) off ON off.n > 0
         WHERE p.status = 'published' AND (
           CASE WHEN EXISTS (SELECT 1 FROM collection_products cp WHERE cp.collection_id = $1)
@@ -60,9 +60,9 @@ export const catalogueRoutes: FastifyPluginAsync = async (app) => {
       pool.query(`SELECT alias FROM product_aliases WHERE product_id = $1 AND verified ORDER BY alias`, [p.id]),
       pool.query(`SELECT url, alt FROM product_images WHERE product_id = $1 ORDER BY sort_order`, [p.id]),
       pool.query(
-        `SELECT s.slug AS store_slug, s.name AS store_name, s.is_open, s.is_test_data, o.price_cents, o.compare_at_cents,
-                (o.stock_on_hand - o.stock_reserved) > 0 AS in_stock
-           FROM store_offers o JOIN storefronts s ON s.id = o.store_id AND s.orderable
+        `SELECT s.slug AS store_slug, s.name AS store_name, s.is_open, s.is_test_data, o.id AS offer_id, o.price_cents, o.compare_at_cents, o.on_promotion,
+                (o.stock_on_hand - o.stock_reserved) > 0 AS in_stock, GREATEST(o.stock_on_hand - o.stock_reserved, 0) AS available
+           FROM offers_live o JOIN storefronts s ON s.id = o.store_id AND s.orderable
           WHERE o.product_id = $1 AND o.is_active ORDER BY o.price_cents`, [p.id]),
     ]);
     const { id, name_norm, status, ...pub } = p;

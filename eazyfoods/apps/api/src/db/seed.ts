@@ -154,6 +154,35 @@ export async function seed(log = console.log) {
     if (!(await c.query('SELECT 1 FROM addresses WHERE user_id=$1', [cust])).rowCount)
       await c.query(`INSERT INTO addresses(user_id,label,recipient_name,phone,line1,city,postal_code,is_default) VALUES ($1,'Home','Test Customer','000-000-0002','10 Test Way NE','Calgary','T2A0A1',true)`, [cust]);
     await c.query(`INSERT INTO coupons(code, description, kind, value, min_subtotal_cents, first_order_only, max_discount_cents) VALUES ('WELCOME10','10% off your first order (dev coupon)','percent',10,2000,true,1500) ON CONFLICT (code) DO NOTHING`);
+
+    // Starter recipes. Written as drafts (ai_generated = true, reviewed = false): they are labelled as such in the UI
+    // and must be reviewed by a person before the label is removed.
+    const R: { title: string; summary: string; region: string; country: string; servings: number; prep: number; cook: number; steps: string[]; safety?: string;
+      ings: { label: string; qty?: string; product?: string; optional?: boolean }[] }[] = [
+      { title: 'Jollof Rice (Nigerian-style)', summary: 'Smoky one-pot tomato rice.', region: 'west-africa', country: 'nigeria', servings: 4, prep: 20, cook: 45,
+        steps: ['Blend tomatoes, peppers and half the onion until smooth, then simmer until the water has reduced.', 'Fry the remaining onion in oil, add tomato paste and cook for a few minutes, then add the blended mix and the jollof seasoning.', 'Wash the rice until the water runs clear, add it with enough stock to just cover, cover tightly and cook on low heat until tender.', 'Fluff with a fork and rest for 5 minutes before serving.'],
+        safety: 'Serve rice hot. Refrigerate leftovers within an hour and reheat until steaming.',
+        ings: [{ label: 'Parboiled long grain rice', qty: '3 cups', product: 'parboiled-long-grain-rice' }, { label: 'Jollof rice seasoning', qty: '2 tbsp', product: 'jollof-rice-seasoning' }, { label: 'Ripe tomatoes', qty: '6' }, { label: 'Red peppers', qty: '2' }, { label: 'Onions', qty: '2' }, { label: 'Tomato paste', qty: '3 tbsp' }, { label: 'Vegetable oil', qty: '1/2 cup' }, { label: 'Stock', qty: '3 cups' }] },
+      { title: 'Egusi Soup', summary: 'Rich melon-seed soup, eaten with swallow foods.', region: 'west-africa', country: 'nigeria', servings: 4, prep: 20, cook: 40,
+        steps: ['Heat palm oil, fry chopped onion briefly, then add the ground egusi and stir until it begins to clump.', 'Add stock and pepper, cover and simmer, stirring occasionally.', 'Add your cooked meat or fish and leafy vegetables, and simmer a few more minutes before serving.'],
+        safety: 'Cook meat and fish thoroughly before adding to the soup.',
+        ings: [{ label: 'Egusi (ground melon seeds)', qty: '1.5 cups', product: 'egusi-ground-melon-seeds' }, { label: 'Palm oil', qty: '1/2 cup' }, { label: 'Onion', qty: '1' }, { label: 'Stock', qty: '2 cups' }, { label: 'Leafy greens (spinach or bitterleaf)', qty: '2 handfuls' }, { label: 'Cooked meat or fish', qty: 'to taste', optional: true }] },
+      { title: 'Ugali with Sautéed Greens', summary: 'East African maize staple with greens.', region: 'east-africa', country: 'kenya', servings: 4, prep: 10, cook: 25,
+        steps: ['Bring water to a boil, then gradually stir in the maize flour, stirring firmly to avoid lumps.', 'Cover and cook on low heat for a few minutes, then stir and press until thick and smooth.', 'Meanwhile sauté onion and tomato, add shredded greens and cook until tender.', 'Serve the ugali in wedges with the greens.'],
+        ings: [{ label: 'Ugali maize flour', qty: '2 cups', product: 'ugali-maize-flour' }, { label: 'Collard greens or kale', qty: '1 large bunch' }, { label: 'Onion', qty: '1' }, { label: 'Tomatoes', qty: '2' }, { label: 'Cooking oil', qty: '2 tbsp' }] },
+      { title: 'Suya-spiced Chicken Skewers', summary: 'Peanut-spice rubbed grilled chicken.', region: 'west-africa', country: 'nigeria', servings: 4, prep: 30, cook: 15,
+        steps: ['Cut chicken into strips and toss with oil and suya spice. Rest for at least 30 minutes in the refrigerator.', 'Thread onto skewers and grill, turning, until cooked through and charred at the edges.', 'Serve with sliced onion and tomato and extra spice.'],
+        safety: 'Cook chicken until the thickest part reaches 74°C (165°F). Contains peanuts: check allergens before serving.',
+        ings: [{ label: 'Suya spice (yaji)', qty: '3 tbsp', product: 'suya-spice-yaji' }, { label: 'Chicken thighs or breast', qty: '700 g' }, { label: 'Vegetable oil', qty: '2 tbsp' }, { label: 'Onion and tomato to serve', optional: true }] },
+    ];
+    for (const r of R) {
+      const rid = (await c.query(`INSERT INTO recipes(slug,title,summary,region_id,country_id,servings,prep_minutes,cook_minutes,steps,food_safety_note,ai_generated,reviewed,status)
+          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,true,false,'published') ON CONFLICT (slug) DO NOTHING RETURNING id`,
+        [slugify(r.title), r.title, r.summary, regionId[r.region], countryId[r.country], r.servings, r.prep, r.cook, JSON.stringify(r.steps), r.safety ?? null])).rows[0]?.id;
+      if (!rid) continue;
+      for (const [i, g] of r.ings.entries())
+        await c.query('INSERT INTO recipe_ingredients(recipe_id, position, label, quantity_text, product_id, optional) VALUES ($1,$2,$3,$4,$5,$6)', [rid, i, g.label, g.qty ?? null, g.product ? productId[g.product] : null, !!g.optional]);
+    }
   });
   log('seeded (test data only)');
 }

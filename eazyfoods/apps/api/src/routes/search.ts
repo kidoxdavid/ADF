@@ -2,6 +2,7 @@ import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
 import { pool } from '../db/pool.js';
 import { norm } from '../lib/norm.js';
+import { LIVE_ADS } from './ads.js';
 
 const query = z.object({
   q: z.string().max(100).default(''),
@@ -47,6 +48,7 @@ export const searchRoutes: FastifyPluginAsync = async (app) => {
          WHERE $1 = '' OR GREATEST(s_name, s_brand, s_alias) >= $2
       ), listing AS (
         SELECT p.slug, p.name, p.pack_size, p.pack_unit, b.name AS brand, c.name AS category,
+               (SELECT url FROM product_images WHERE product_id = p.id ORDER BY sort_order LIMIT 1) AS image_url, p.id AS product_id,
                r.score, r.matched_alias, off.min_price, off.store_count, off.in_stock
           FROM ranked r
           JOIN products p ON p.id = r.id
@@ -56,7 +58,7 @@ export const searchRoutes: FastifyPluginAsync = async (app) => {
             SELECT COALESCE(min(o.price_cents) FILTER (WHERE o.stock_on_hand - o.stock_reserved > 0), min(o.price_cents)) AS min_price,
                    count(DISTINCT o.store_id) AS store_count,
                    COALESCE(bool_or(o.stock_on_hand - o.stock_reserved > 0), false) AS in_stock
-              FROM store_offers o JOIN storefronts s ON s.id = o.store_id AND s.orderable
+              FROM offers_live o JOIN storefronts s ON s.id = o.store_id AND s.orderable
              WHERE o.product_id = p.id AND o.is_active
                AND ($6::text IS NULL OR s.slug = $6)
                AND ($7::boolean IS NOT TRUE OR o.stock_on_hand - o.stock_reserved > 0)
@@ -93,7 +95,18 @@ export const searchRoutes: FastifyPluginAsync = async (app) => {
         regions: (await pool.query('SELECT slug, name FROM regions WHERE is_active ORDER BY sort_order')).rows,
       };
     }
-    return { query: a.q, total, page: a.page, page_size: PAGE, results: rows.map(({ total: _t, ...r }) => ({ ...r, store_count: Number(r.store_count) })), suggestions };
+    // Sponsored placements: only products that already match the search or filters, clearly labelled, shown first.
+    let sponsored: { slug: string; campaign_id: string }[] = [];
+    if (a.page === 1 && total > 0) {
+      const ids = rows.map((r) => r.product_id);
+      sponsored = (await pool.query(
+        `SELECT p.slug, a.id AS campaign_id FROM (${LIVE_ADS}) a JOIN products p ON p.id = a.product_id
+          WHERE a.placement = 'search_sponsored' AND a.spent_cents < a.budget_cents AND a.product_id = ANY($1::uuid[]) LIMIT 2`, [ids])).rows;
+    }
+    const spMap = new Map(sponsored.map((s) => [s.slug, s.campaign_id]));
+    const results = rows.map(({ total: _t, product_id: _p, ...r }) => ({ ...r, store_count: Number(r.store_count), sponsored_campaign_id: spMap.get(r.slug) ?? null }));
+    results.sort((x, y) => Number(!!y.sponsored_campaign_id) - Number(!!x.sponsored_campaign_id));
+    return { query: a.q, total, page: a.page, page_size: PAGE, results, suggestions };
   });
 
   app.get('/search/suggest', async (req) => {
@@ -102,7 +115,7 @@ export const searchRoutes: FastifyPluginAsync = async (app) => {
     const { rows } = await pool.query(
       `(SELECT 'product' AS type, p.name AS label, p.slug, NULL AS via
           FROM products p WHERE p.status = 'published' AND (p.name_norm LIKE $1 || '%' OR p.name_norm LIKE '% ' || $1 || '%')
-          AND EXISTS (SELECT 1 FROM store_offers o JOIN storefronts s ON s.id = o.store_id AND s.orderable WHERE o.product_id = p.id AND o.is_active)
+          AND EXISTS (SELECT 1 FROM offers_live o JOIN storefronts s ON s.id = o.store_id AND s.orderable WHERE o.product_id = p.id AND o.is_active)
           ORDER BY p.name LIMIT 5)
        UNION ALL
        (SELECT 'product', p.name, p.slug, a.alias

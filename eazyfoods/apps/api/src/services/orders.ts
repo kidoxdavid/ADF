@@ -33,12 +33,22 @@ export async function restockSuborder(c: PoolClient, suborderId: string, actor: 
 
 export type Actor = { userId: string | null; kind: 'vendor' | 'customer' | 'driver' | 'staff' | 'system' };
 
+/** Which target statuses each kind of actor may set. Staff and system can use any valid transition. */
+const ACTOR_TARGETS: Partial<Record<Actor['kind'], string[]>> = {
+  customer: ['cancelled'],
+  vendor: ['accepted', 'preparing', 'ready', 'collected', 'rejected', 'cancelled'],
+  driver: ['out_for_delivery', 'delivered'],
+};
+
 /** The only place suborder status changes. Validates the transition, records history, and runs side effects. */
 export async function moveSuborder(c: PoolClient, after: After, suborderId: string, to: string, actor: Actor, note?: string | null) {
   const s = (await c.query(
     `SELECT s.*, o.user_id, o.customer_email, o.order_number, o.id AS oid FROM suborders s JOIN orders o ON o.id = s.order_id WHERE s.id = $1 FOR UPDATE OF s`, [suborderId])).rows[0];
   if (!s) throw notFound('Order not found');
   if (!TRANSITIONS[s.status]?.includes(to)) throw conflict('invalid_transition', `A ${s.status.replace(/_/g, ' ')} order cannot become ${to.replace(/_/g, ' ')}.`);
+  if (ACTOR_TARGETS[actor.kind] && !ACTOR_TARGETS[actor.kind]!.includes(to)) throw forbidden('You cannot make that change.');
+  if (actor.kind === 'customer' && s.status !== 'placed') throw conflict('too_late', 'The store has already started on your order. Please contact support.');
+  if (actor.kind === 'vendor' && to === 'rejected' && s.status !== 'placed') throw conflict('invalid_transition', 'Only new orders can be rejected. Use cancel with a reason instead.');
   if (to === 'collected' && s.fulfilment_method !== 'pickup') throw conflict('invalid_transition', 'Only pickup orders can be collected.');
   if (to === 'out_for_delivery' && s.fulfilment_method !== 'delivery') throw conflict('invalid_transition', 'Only delivery orders go out for delivery.');
   if (to === 'ready') {

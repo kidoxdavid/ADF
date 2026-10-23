@@ -10,6 +10,8 @@ import { createRefund, processRefund, rejectRefund } from '../services/refunds.j
 import { loadOrder } from './orders.js';
 import { adminCatalogRoutes } from './adminCatalog.js';
 import { adminOpsRoutes } from './adminOps.js';
+import { adminSystemRoutes } from './adminSystem.js';
+import { adminReportRoutes } from './adminReports.js';
 
 const uuid = z.string().uuid();
 
@@ -137,5 +139,7 @@ export const adminRoutes: FastifyPluginAsync = async (app) => {
 
   await app.register(adminCatalogRoutes);
   await app.register(adminOpsRoutes);
+  await app.register(adminSystemRoutes);
+  await app.register(adminReportRoutes);
   void can;
 };
