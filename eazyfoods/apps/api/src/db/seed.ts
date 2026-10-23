@@ -43,6 +43,7 @@ const PRODUCTS: P[] = [
   { name: 'Harissa Paste', cat: 'spices-seasonings-sauces', size: 135, unit: 'g', culinary: ['tunisia', 'algeria', 'morocco'], desc: 'North African chilli paste.' },
   { name: 'Jollof Rice Seasoning', cat: 'spices-seasonings-sauces', size: 100, unit: 'g', culinary: ['nigeria', 'ghana', 'senegal'], desc: 'Seasoning blend for jollof rice.' },
   { name: 'Mielie Meal (Maize Meal)', brand: 'Iwisa', cat: 'rice-grains-flour', size: 5, unit: 'kg', culinary: ['south-africa', 'zimbabwe'], aliases: [['Pap flour', true], ['Sadza flour', true]], desc: 'Maize meal for pap and sadza.' },
+  { name: 'Parboiled Long Grain Rice', cat: 'rice-grains-flour', size: 5, unit: 'kg', culinary: ['nigeria', 'ghana', 'senegal', 'cote-d-ivoire'], desc: 'Long grain parboiled rice, the usual base for jollof.', allergens: [] },
   { name: 'Suya Spice (Yaji)', cat: 'spices-seasonings-sauces', size: 150, unit: 'g', culinary: ['nigeria'], aliases: [['Yaji', true]], desc: 'Peanut-based suya rub.', allergens: ['peanuts'] },
 ];
 
@@ -81,6 +82,7 @@ export async function seed(log = console.log) {
          ON CONFLICT (slug) DO UPDATE SET description=$4 RETURNING id`,
         [slug, p.name, norm(p.name), p.desc, brandId, catId[p.cat], p.size ?? null, p.unit ?? null, p.sold ?? 'unit', p.ingredients ?? null, p.allergens ?? null])).rows[0].id;
       productId[slug] = id;
+      if (p.cat === 'snacks-drinks') await c.query(`UPDATE products SET tax_class='standard' WHERE id=$1`, [id]);
       for (const cs of p.culinary) await c.query(`INSERT INTO product_countries VALUES ($1,$2,'culinary') ON CONFLICT DO NOTHING`, [id, countryId[cs]]);
       for (const cs of p.made ?? []) await c.query(`INSERT INTO product_countries VALUES ($1,$2,'manufacturing') ON CONFLICT DO NOTHING`, [id, countryId[cs]]);
       for (const [alias, verified] of p.aliases ?? [])
@@ -124,7 +126,7 @@ export async function seed(log = console.log) {
       for (const r of s.regions) await c.query('INSERT INTO store_regions VALUES ($1,$2) ON CONFLICT DO NOTHING', [st, regionId[r]]);
       // Each store stocks a different subset at different (invented) prices.
       for (const [pi, slug] of slugs.entries()) {
-        if ((pi + si) % 3 === 2) continue;
+        if ((pi + si) % 4 === 3) continue;
         const price = 399 + ((pi * 137 + si * 53) % 1500);
         const stock = (pi + si) % 7 === 0 ? 0 : 5 + ((pi * 3 + si) % 20);
         const o = await c.query(
@@ -133,6 +135,25 @@ export async function seed(log = console.log) {
         if (o.rows[0]) await c.query(`INSERT INTO inventory_adjustments(offer_id,delta,reason,resulting_on_hand) VALUES ($1,$2,'initial',$2)`, [o.rows[0].id, stock]);
       }
     }
+
+    // Delivery zone (development defaults; production zones are configured in the admin console).
+    // Calgary forward sortation areas. Verify the list and fees before launch.
+    const zone = (await c.query(`SELECT id FROM delivery_zones WHERE name='Calgary'`)).rows[0]?.id
+      ?? (await c.query(`INSERT INTO delivery_zones(name, fee_cents, free_over_cents, eta_minutes) VALUES ('Calgary', 599, 7500, 90) RETURNING id`)).rows[0].id;
+    const fsas = 'T1Y T2A T2B T2C T2E T2G T2H T2J T2K T2L T2M T2N T2P T2R T2S T2T T2V T2W T2X T2Y T2Z T3A T3B T3C T3E T3G T3H T3J T3K T3L T3M T3N T3P T3R'.split(' ');
+    for (const f of fsas) await c.query('INSERT INTO delivery_zone_fsas VALUES ($1,$2) ON CONFLICT DO NOTHING', [f, zone]);
+    await c.query('INSERT INTO store_delivery_zones SELECT s.id, $1 FROM stores s WHERE s.is_test_data ON CONFLICT DO NOTHING', [zone]);
+    await c.query(`UPDATE stores SET offers_pickup = true WHERE slug = 'demo-horn-spice-grocer'`);
+
+    for (const [email, name, role] of [['owner@example.test', 'Test Owner (all permissions)', 'owner'], ['support@example.test', 'Test Support', 'support'],
+      ['finance@example.test', 'Test Finance', 'finance'], ['dispatcher@example.test', 'Test Dispatcher', 'dispatcher']] as const) await user(email, name, role);
+    const driverUser = await user('driver@example.test', 'Test Driver', 'driver');
+    await c.query(`INSERT INTO drivers(user_id, status, phone, vehicle, licence_verified, background_check_verified, is_available) VALUES ($1,'approved','000-000-0001','Car',true,true,true) ON CONFLICT (user_id) DO NOTHING`, [driverUser]);
+
+    const cust = (await c.query(`SELECT id FROM users WHERE email='customer@example.test'`)).rows[0].id;
+    if (!(await c.query('SELECT 1 FROM addresses WHERE user_id=$1', [cust])).rowCount)
+      await c.query(`INSERT INTO addresses(user_id,label,recipient_name,phone,line1,city,postal_code,is_default) VALUES ($1,'Home','Test Customer','000-000-0002','10 Test Way NE','Calgary','T2A0A1',true)`, [cust]);
+    await c.query(`INSERT INTO coupons(code, description, kind, value, min_subtotal_cents, first_order_only, max_discount_cents) VALUES ('WELCOME10','10% off your first order (dev coupon)','percent',10,2000,true,1500) ON CONFLICT (code) DO NOTHING`);
   });
   log('seeded (test data only)');
 }

@@ -2,6 +2,7 @@ import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
 import { pool } from '../db/pool.js';
 import { COOKIE, createSession } from '../lib/auth.js';
+import { rl } from '../lib/ratelimit.js';
 import { hashPassword, hashToken, verifyPassword } from '../lib/password.js';
 
 const creds = z.object({
@@ -11,7 +12,7 @@ const creds = z.object({
 const DUMMY = await hashPassword('timing-equalizer');
 
 export const authRoutes: FastifyPluginAsync = async (app) => {
-  const limit = { config: { rateLimit: { max: 10, timeWindow: '1 minute' } } };
+  const limit = rl(10, '1 minute');
 
   app.post('/register', limit, async (req, reply) => {
     const body = creds.extend({ full_name: z.string().min(1).max(120) }).parse(req.body);

@@ -83,6 +83,10 @@ describe('authorization', () => {
     const st = (await pool.query(`INSERT INTO stores(vendor_id,slug,name,is_test_data) VALUES ($1,'gate-test','Gate Test',true) RETURNING id`, [vend])).rows[0].id;
     const early = await app.inject({ method: 'PATCH', url: `/api/admin/stores/${st}/status`, headers: { cookie }, payload: { status: 'published' } });
     expect(early.statusCode).toBe(409);
+    // approval needs a verified business document
+    expect((await app.inject({ method: 'PATCH', url: `/api/admin/vendors/${vend}/status`, headers: { cookie }, payload: { status: 'approved' } })).json().error).toBe('docs_required');
+    const doc = (await pool.query(`INSERT INTO vendor_documents(vendor_id, kind, url) VALUES ($1,'business_licence','/uploads/x.pdf') RETURNING id`, [vend])).rows[0].id;
+    expect((await app.inject({ method: 'PATCH', url: `/api/admin/vendor-documents/${doc}`, headers: { cookie }, payload: { status: 'verified' } })).statusCode).toBe(200);
     expect((await app.inject({ method: 'PATCH', url: `/api/admin/vendors/${vend}/status`, headers: { cookie }, payload: { status: 'approved' } })).statusCode).toBe(200);
     expect((await app.inject({ method: 'PATCH', url: `/api/admin/stores/${st}/status`, headers: { cookie }, payload: { status: 'published' } })).statusCode).toBe(200);
     const a = await pool.query(`SELECT action FROM audit_log WHERE entity_id = $1 OR entity_id = $2`, [vend, st]);
