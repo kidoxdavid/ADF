@@ -120,3 +120,6 @@ main { padding-top: 14px; }
 .line { grid-template-columns: 76px 1fr auto; } .line .pimg-s { width: 76px; border-radius: 10px; overflow: hidden; background: var(--tint); aspect-ratio: 1; } .line .pimg-s svg { width: 100%; height: 100%; display: block; }
 .sticky-bar { bottom: calc(var(--tab-h) + env(safe-area-inset-bottom) + 8px); }
 .empty-art { max-width: 220px; margin: 0 auto 8px; }
+
+/* Placeholder while the hero slides load: same size and base colour as the first slide, so nothing flashes or jumps. */
+.hero-skel { margin: 4px 0 16px; border-radius: 16px; min-height: 250px; background: linear-gradient(115deg, #0b3a24, #1d7a4c); } @media (min-width: 900px) { .hero-skel { min-height: 340px; border-radius: 18px; } }

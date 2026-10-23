@@ -85,3 +85,21 @@ describe('navigation menu', () => {
     });
   }
 });
+
+describe('home carousel', () => {
+  it('does not flash or reorder slides while loading: the first slide shown is the welcome slide and the order never changes', async () => {
+    const { page } = await newPage(browser, DESKTOP);
+    await page.addInitScript(() => {
+      (window as any).__heroLog = [];
+      const sample = () => { const li = [...document.querySelectorAll('.hero-slide')].map((e) => e.getAttribute('aria-label') + '|' + (e.querySelector('h2')?.textContent ?? '')); const skel = !!document.querySelector('.hero-skel'); (window as any).__heroLog.push({ li, skel }); };
+      setInterval(sample, 40);
+    });
+    await page.goto(base()); await page.waitForSelector('.hero-slide'); await page.waitForTimeout(1500);
+    const log: { li: string[]; skel: boolean }[] = await page.evaluate(() => (window as any).__heroLog);
+    const withSlides = log.filter((l) => l.li.length > 0);
+    expect(withSlides.length).toBeGreaterThan(0);
+    // once slides exist they are always the same list (no insertion later)
+    expect(new Set(withSlides.map((l) => l.li.join('~'))).size).toBe(1);
+    expect(withSlides[0].li[0]).toContain('African groceries');     // the welcome slide is first
+  });
+});
