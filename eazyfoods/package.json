@@ -1,0 +1,14 @@
+{
+  "name": "eazyfoods",
+  "private": true,
+  "workspaces": ["apps/*"],
+  "scripts": {
+    "dev:api": "npm -w apps/api run dev",
+    "dev:web": "npm -w apps/web run dev",
+    "migrate": "npm -w apps/api run migrate",
+    "seed": "npm -w apps/api run seed",
+    "test": "npm -w apps/api test",
+    "typecheck": "npm -w apps/api run typecheck && npm -w apps/web run typecheck",
+    "build": "npm -w apps/web run build"
+  }
+}
