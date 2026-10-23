@@ -16,8 +16,8 @@ createdb eazyfoods_dev && createdb eazyfoods_test
 cp apps/api/.env.example apps/api/.env      # set DATABASE_URL
 npm run migrate                               # apply SQL migrations
 npm run seed                                  # DEV-ONLY demo data (refuses to run in production)
-npm run dev:api                               # http://localhost:4000 (mock payments: TEST MODE)
-npm run dev:web                               # http://localhost:5173 (proxies /api)
+npm run dev                                   # starts API + website together; prints Local and Network (phone) addresses
+# (or separately: npm run dev:api  and  npm run dev:web)
 ```
 
 Seeded dev logins (password `dev-password-123`, `example.test` addresses, never for production):
