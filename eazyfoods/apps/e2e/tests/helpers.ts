@@ -12,8 +12,8 @@ export async function launch(): Promise<Browser> {
   return chromium.launch({ executablePath: process.env.CHROMIUM_PATH ?? (existsSync(local) ? local : undefined), args: ['--no-sandbox'] });
 }
 
-export async function newPage(browser: Browser, size = DESKTOP): Promise<{ ctx: BrowserContext; page: Page; errors: string[] }> {
-  const ctx = await browser.newContext({ viewport: size, hasTouch: size.width < 600, isMobile: size.width < 600 });
+export async function newPage(browser: Browser, size = DESKTOP, colorScheme: 'light' | 'dark' = 'light'): Promise<{ ctx: BrowserContext; page: Page; errors: string[] }> {
+  const ctx = await browser.newContext({ viewport: size, hasTouch: size.width < 600, isMobile: size.width < 600, colorScheme });
   const page = await ctx.newPage();
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(`pageerror: ${e.message}`));

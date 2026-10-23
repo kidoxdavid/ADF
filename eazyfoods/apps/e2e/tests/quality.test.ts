@@ -51,6 +51,12 @@ describe('accessibility (axe, WCAG 2 A/AA): no serious or critical violations', 
     for (const path of PUBLIC) { await page.goto(base() + path); await page.waitForLoadState('networkidle'); found.push(...(await scan(page, path))); }
     expect(found).toEqual([]);
   });
+  it('public pages in dark mode', async () => {
+    const { page } = await newPage(browser, MOBILE, 'dark');
+    const found: string[] = [];
+    for (const path of PUBLIC) { await page.goto(base() + path); await page.waitForLoadState('networkidle'); found.push(...(await scan(page, `dark ${path}`))); }
+    expect(found).toEqual([]);
+  });
   it('signed-in customer and portal pages', async () => {
     const found: string[] = [];
     for (const [email, path] of [['customer@example.test', '/account'] as const, ['customer@example.test', '/orders'] as const, ...PORTALS]) {

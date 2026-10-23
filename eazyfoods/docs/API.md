@@ -137,6 +137,7 @@ All paths are under the API origin. Bodies are JSON and validated with zod; erro
 | POST | `/api/admin/products/:id/images` | public | adminCatalog.ts |
 | GET | `/api/admin/recipes` | public | adminCatalog.ts |
 | POST | `/api/admin/recipes` | public | adminCatalog.ts |
+| GET | `/api/admin/recipes/:id` | public | adminCatalog.ts |
 | PUT | `/api/admin/recipes/:id` | public | adminCatalog.ts |
 | GET | `/api/admin/refunds` | permission: refunds.approve, refunds.request, orders.view | admin.ts |
 | POST | `/api/admin/refunds/:id/approve` | permission: refunds.approve | admin.ts |
@@ -216,4 +217,4 @@ All paths are under the API origin. Bodies are JSON and validated with zod; erro
 | GET | `/api/vendor/support` | signed in | support.ts |
 | POST | `/api/vendor/support` | signed in | support.ts |
 
-192 endpoints.
+193 endpoints.

@@ -56,7 +56,7 @@ export function StorePage() {
         {s.products.map((p) => (
           <li key={p.slug}>
             <div className="card">
-              <Link to={`/p/${p.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}><Thumb name={p.name} url={p.image_url} /></Link>
+              <Link to={`/p/${p.slug}`} tabIndex={-1} aria-hidden="true" style={{ textDecoration: 'none', color: 'inherit' }}><Thumb name={p.name} url={p.image_url} /></Link>
               <div className="card-body">
                 {p.brand && <span className="eyebrow">{p.brand}</span>}
                 <Link to={`/p/${p.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}><h3>{p.name}</h3></Link>
