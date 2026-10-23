@@ -35,7 +35,11 @@ function Mega({ onClose }: { onClose: () => void }) {
   const regions = useApi<Region[]>('/regions');
   const cats = useApi<{ slug: string; name: string }[]>('/categories');
   const loc = useLocation();
-  useEffect(() => { onClose(); }, [loc.pathname + loc.search]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Close when the location actually changes. Comparing values (not counting runs) is robust to React StrictMode,
+  // which runs effects twice on mount in development and previously made the menu close the instant it opened.
+  const here = loc.pathname + loc.search;
+  const opened = useRef(here);
+  useEffect(() => { if (opened.current !== here) { opened.current = here; onClose(); } }, [here, onClose]);
   useEffect(() => { const k = (e: KeyboardEvent) => e.key === 'Escape' && onClose(); document.addEventListener('keydown', k); return () => document.removeEventListener('keydown', k); }, [onClose]);
   return (
     <div className="mega-wrap" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>

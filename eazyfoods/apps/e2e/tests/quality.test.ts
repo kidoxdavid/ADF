@@ -67,3 +67,21 @@ describe('accessibility (axe, WCAG 2 A/AA): no serious or critical violations', 
     expect(found).toEqual([]);
   });
 });
+
+describe('navigation menu', () => {
+  for (const [label, size] of [['phone', MOBILE], ['desktop', DESKTOP]] as const) {
+    it(`the departments menu opens, stays open, navigates and closes (${label})`, async () => {
+      const { page, errors } = await newPage(browser, size);
+      await page.goto(base()); await page.waitForLoadState('networkidle');
+      await page.getByRole('button', { name: size.width < 600 ? 'Open all departments' : /All departments/ }).first().click();
+      const menu = page.getByRole('dialog', { name: 'All departments' });
+      await menu.waitFor({ state: 'visible' });
+      await page.waitForTimeout(700);                                   // it must still be there a moment later
+      expect(await menu.isVisible()).toBe(true);
+      await menu.getByRole('link', { name: 'Weekly deals' }).click();
+      await page.waitForURL('**/deals');
+      await page.getByRole('dialog', { name: 'All departments' }).waitFor({ state: 'hidden', timeout: 5000 });   // closes after navigating
+      expect(errors).toEqual([]);
+    });
+  }
+});
