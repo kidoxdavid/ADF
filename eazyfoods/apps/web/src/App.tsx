@@ -1,69 +1,78 @@
-import { useState, type FormEvent } from 'react';
-import { Link, NavLink, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
-import { api, type Region } from './api';
-import { useApi, useMe } from './hooks';
+import { lazy, Suspense, type ReactNode } from 'react';
+import { Link, Route, Routes } from 'react-router-dom';
+import { AuthProvider } from './auth';
+import { CartProvider } from './cart';
+import { ToastProvider } from './toast';
+import { Footer, Header, TabBar } from './shell';
+import { Empty, Loading } from './ui';
+import { RequireAuth } from './guard';
 import { Home } from './pages/Home';
 import { SearchPage } from './pages/Search';
-import { CollectionPage } from './pages/Collection';
 import { ProductPage } from './pages/Product';
-import { StorePage } from './pages/Store';
-import { AuthPage } from './pages/Auth';
-import { Empty } from './components';
+import { StorePage, StoresPage } from './pages/Store';
+import { CollectionPage } from './pages/Collection';
+import { CartPage } from './pages/Cart';
+import { CheckoutPage } from './pages/Checkout';
+import { OrdersPage, OrderPage } from './pages/Orders';
+import { AccountPage } from './pages/Account';
+import { SignIn, Register, Forgot, Reset, Verify } from './pages/Auth';
+import { RecipesPage, RecipePage } from './pages/Recipes';
+import { ContentPage } from './pages/ContentPage';
 
-function Header({ me, onLogout }: { me: ReturnType<typeof useMe>['me']; onLogout: () => void }) {
-  const nav = useNavigate();
-  const [q, setQ] = useState('');
-  const regions = useApi<Region[]>('/regions');
-  const loc = useLocation();
-  const activeRegion = loc.pathname === '/search' ? new URLSearchParams(loc.search).get('region') : null;
-  const submit = (e: FormEvent) => { e.preventDefault(); nav(`/search?q=${encodeURIComponent(q)}`); };
-  return (
-    <header className="site-header">
-      <div className="wrap bar">
-        <Link to="/" className="logo" aria-label="EAZyfoods home">EAZy<span>foods</span></Link>
-        <form onSubmit={submit} role="search" className="searchbar">
-          <label className="sr-only" htmlFor="q">Search products, brands and stores</label>
-          <input id="q" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search garri, shito, berbere, pondu…" autoComplete="off" />
-          <button type="submit">Search</button>
-        </form>
-        <div className="account">
-          {me ? (<><span className="small">Hi, {me.full_name.split(' ')[0]}</span><button className="link" onClick={onLogout}>Sign out</button></>)
-              : <NavLink to="/account">Sign in</NavLink>}
-        </div>
-      </div>
-      <nav className="wrap regions" aria-label="Shop by region">
-        {regions.data?.map((r) => <Link key={r.slug} to={`/search?region=${r.slug}`} className={activeRegion === r.slug ? 'active' : ''} aria-current={activeRegion === r.slug ? 'page' : undefined}>{r.name}</Link>)}
-        <NavLink to="/stores">Stores</NavLink>
-      </nav>
-    </header>
-  );
-}
+const Vendor = lazy(() => import('./portals/vendor'));
+const Admin = lazy(() => import('./portals/admin'));
+const Driver = lazy(() => import('./portals/driver'));
+
+const Site = ({ children }: { children: ReactNode }) => (
+  <>
+    <a className="skip" href="#main">Skip to content</a>
+    <Header />
+    <main id="main" className="wrap">{children}</main>
+    <Footer />
+    <TabBar />
+  </>
+);
 
 export function App() {
-  const { me, reload } = useMe();
-  const logout = async () => { await api('/auth/logout', { method: 'POST' }); reload(); };
   return (
-    <>
-      <a className="skip" href="#main">Skip to content</a>
-      <Header me={me} onLogout={logout} />
-      <main id="main" className="wrap">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/search" element={<SearchPage />} />
-          <Route path="/stores" element={<StorePage list />} />
-          <Route path="/c/:slug" element={<CollectionPage />} />
-          <Route path="/p/:slug" element={<ProductPage />} />
-          <Route path="/s/:slug" element={<StorePage />} />
-          <Route path="/account" element={<AuthPage onDone={reload} />} />
-          <Route path="*" element={<Empty title="Page not found"><Link to="/">Back to the shop</Link></Empty>} />
-        </Routes>
-      </main>
-      <footer className="site-footer">
-        <div className="wrap">
-          <strong>EAZyfoods</strong> · African groceries from local stores, starting in Calgary, Alberta.
-          <p className="small muted">Prices and availability are set by each store. Checkout is not open yet.</p>
-        </div>
-      </footer>
-    </>
+    <ToastProvider>
+      <AuthProvider>
+        <CartProvider>
+          <Suspense fallback={<div className="wrap"><Loading /></div>}>
+            <Routes>
+              <Route path="/vendor/*" element={<RequireAuth><Vendor /></RequireAuth>} />
+              <Route path="/admin/*" element={<RequireAuth><Admin /></RequireAuth>} />
+              <Route path="/driver/*" element={<RequireAuth><Driver /></RequireAuth>} />
+              <Route path="*" element={
+                <Site>
+                  <Routes>
+                    <Route path="/" element={<Home />} />
+                    <Route path="/search" element={<SearchPage />} />
+                    <Route path="/stores" element={<StoresPage />} />
+                    <Route path="/s/:slug" element={<StorePage />} />
+                    <Route path="/c/:slug" element={<CollectionPage />} />
+                    <Route path="/p/:slug" element={<ProductPage />} />
+                    <Route path="/recipes" element={<RecipesPage />} />
+                    <Route path="/recipes/:slug" element={<RecipePage />} />
+                    <Route path="/cart" element={<CartPage />} />
+                    <Route path="/checkout" element={<RequireAuth><CheckoutPage /></RequireAuth>} />
+                    <Route path="/orders" element={<RequireAuth><OrdersPage /></RequireAuth>} />
+                    <Route path="/orders/:id" element={<RequireAuth><OrderPage /></RequireAuth>} />
+                    <Route path="/account" element={<RequireAuth><AccountPage /></RequireAuth>} />
+                    <Route path="/signin" element={<SignIn />} />
+                    <Route path="/register" element={<Register />} />
+                    <Route path="/forgot" element={<Forgot />} />
+                    <Route path="/reset" element={<Reset />} />
+                    <Route path="/verify" element={<Verify />} />
+                    <Route path="/pages/:slug" element={<ContentPage />} />
+                    <Route path="*" element={<Empty title="Page not found"><Link to="/">Back to the shop</Link></Empty>} />
+                  </Routes>
+                </Site>
+              } />
+            </Routes>
+          </Suspense>
+        </CartProvider>
+      </AuthProvider>
+    </ToastProvider>
   );
 }
