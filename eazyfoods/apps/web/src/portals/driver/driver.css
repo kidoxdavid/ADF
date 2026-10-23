@@ -1,0 +1,5 @@
+.driver-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 12px 0; }
+.driver-actions .btn { min-height: 52px; font-size: 1.05rem; }
+.code-input { font: 800 2rem var(--display); letter-spacing: .4em; text-align: center; min-height: 64px; }
+.steps { display: flex; gap: 8px; margin-bottom: 12px; } .steps span { flex: 1; text-align: center; padding: 10px; border-radius: var(--r-sm); background: var(--line); font-weight: 700; color: var(--ink-2); }
+.steps span.on { background: var(--green); color: #fff; } .steps span.done { background: var(--green-bg); color: var(--green-2); }

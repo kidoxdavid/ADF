@@ -52,7 +52,11 @@ export async function buildApp() {
   });
 
   app.setErrorHandler((err: any, req, reply) => {
-    if (err instanceof ZodError) return reply.code(400).send({ error: 'validation', issues: err.issues });
+    if (err instanceof ZodError) {
+      // Readable summary for the UI ("price_cents: Expected number"), with the raw issues kept for tooling.
+      const message = err.issues.map((i) => (i.path.length ? `${i.path.join('.')}: ` : '') + i.message).join('; ');
+      return reply.code(400).send({ error: 'validation', message, issues: err.issues });
+    }
     if (err.statusCode && err.statusCode < 500) return reply.code(err.statusCode).send({ error: err.code ?? 'error', message: err.message, ...(err.details ? { details: err.details } : {}) });
     if (config.NODE_ENV === 'test') console.error(err);
     req.log.error(err);

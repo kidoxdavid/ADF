@@ -270,3 +270,30 @@ describe('refunds keep the books balanced', () => {
     expect(await ledgerSum(o.id, 'refund_loss')).toBeGreaterThan(0);
   });
 });
+
+describe('basket merge and reorder', () => {
+  it('merges a signed-out basket (capping to stock, skipping dead offers) and can reorder a past order', async () => {
+    const u = await newCustomer();
+    const garri = await setOffer(S1, 'garri-white', 2000, 3);
+    const chips = await setOffer(S1, 'plantain-chips-salted', 1500, 0);
+    const r = await call(u.cookie, 'POST', '/api/cart/merge', { items: [{ offer_id: garri, quantity: 5 }, { offer_id: chips, quantity: 1 }, { offer_id: randomUUID(), quantity: 1 }] });
+    expect(r.status).toBe(200);
+    expect(r.body.skipped).toHaveLength(2);
+    expect(r.body.stores[0].items[0].quantity).toBe(3);          // capped to what the store has
+    const again = await call(u.cookie, 'POST', '/api/cart/merge', { items: [{ offer_id: garri, quantity: 2 }] });
+    expect(again.body.stores[0].items[0].quantity).toBe(3);      // never exceeds stock
+
+    await setOffer(S1, 'garri-white', 2000, 10);
+    await setOffer(S1, 'plantain-chips-salted', 1500, 10);
+    const b = await newCustomer();
+    await addToCart(b.cookie, garri, 2); await addToCart(b.cookie, chips, 1);
+    const o = (await checkout(b.cookie, b.addressId)).body.order;
+    await simulate(b.cookie, o.id, 'succeeded');
+    await pool.query('UPDATE store_offers SET stock_on_hand = 0 WHERE id = $1', [chips]);
+    const re = await call(b.cookie, 'POST', `/api/orders/${o.id}/reorder`);
+    expect(re.status).toBe(200);
+    expect(re.body.skipped).toEqual(['Plantain Chips (Salted)']);
+    expect(re.body.item_count).toBe(2);
+    expect((await call((await newCustomer()).cookie, 'POST', `/api/orders/${o.id}/reorder`)).status).toBe(404);
+  });
+});

@@ -80,6 +80,17 @@ export const orderRoutes: FastifyPluginAsync = async (app) => {
     return rows;
   });
 
+  // Lets the customer resume paying for an order that is still waiting for payment (e.g. after closing the tab).
+  app.get<{ Params: { id: string } }>('/orders/:id/payment', async (req) => {
+    const id = z.string().uuid().parse(req.params.id);
+    const p = (await pool.query(
+      `SELECT p.provider, p.client_secret, p.status, o.status AS order_status, o.total_cents FROM payments p JOIN orders o ON o.id = p.order_id
+        WHERE o.id = $1 AND o.user_id = $2 ORDER BY p.created_at DESC LIMIT 1`, [id, req.user!.id])).rows[0];
+    if (!p) throw notFound('Order not found');
+    const payable = p.status === 'requires_payment' && p.order_status === 'pending_payment';
+    return { payable, provider: p.provider, client_secret: payable ? p.client_secret : null, total_cents: p.total_cents };
+  });
+
   app.get<{ Params: { id: string } }>('/orders/:id', async (req) => loadOrder(z.string().uuid().parse(req.params.id), req.user!.id));
 
   // Customer may cancel until the store accepts. Refund is automatic.
@@ -129,8 +140,8 @@ export const orderRoutes: FastifyPluginAsync = async (app) => {
         const o = (await c.query(`SELECT o.price_cents, o.is_active, o.stock_on_hand - o.stock_reserved AS available, s.orderable FROM offers_live o JOIN storefronts s ON s.id = o.store_id WHERE o.id = $1`, [l.offer_id])).rows[0];
         if (!o || !o.is_active || !o.orderable || o.available < 1) { skipped.push(l.product_name); continue; }
         await c.query(
-          `INSERT INTO cart_items(cart_id, offer_id, quantity, added_price_cents) VALUES ($1,$2,LEAST($3,$5),$4)
-           ON CONFLICT (cart_id, offer_id) DO UPDATE SET quantity = LEAST(cart_items.quantity + $3, $5, 99)`, [cid, l.offer_id, l.quantity, o.price_cents, o.available]);
+          `INSERT INTO cart_items(cart_id, offer_id, quantity, added_price_cents) VALUES ($1,$2,LEAST($3::int,$5::int),$4)
+           ON CONFLICT (cart_id, offer_id) DO UPDATE SET quantity = LEAST(cart_items.quantity + $3::int, $5::int, 99)`, [cid, l.offer_id, l.quantity, o.price_cents, o.available]);
       }
     });
     return { ...(await cartView(req.user!.id)), skipped };

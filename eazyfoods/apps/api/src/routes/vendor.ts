@@ -20,7 +20,7 @@ export const vendorRoutes: FastifyPluginAsync = async (app) => {
     const { storeId } = z.object({ storeId: z.string().uuid() }).parse(req.params);
     if (!(await canManageStore(req.user!, storeId))) return reply.code(403).send({ error: 'forbidden' });
     const { rows } = await pool.query(
-      `SELECT o.product_id, p.name, p.slug, o.price_cents, o.compare_at_cents, o.is_active, o.stock_on_hand, o.stock_reserved,
+      `SELECT o.id AS offer_id, o.product_id, p.name, p.slug, o.price_cents, o.compare_at_cents, o.is_active, o.stock_on_hand, o.stock_reserved,
               (o.stock_on_hand - o.stock_reserved) AS available, (o.stock_on_hand - o.stock_reserved) <= o.low_stock_threshold AS low_stock
          FROM store_offers o JOIN products p ON p.id = o.product_id WHERE o.store_id = $1 ORDER BY p.name`, [storeId]);
     return rows;

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ButtonHTMLAttributes, type ReactNode, type InputHTMLAttributes, type SelectHTMLAttributes, type TextareaHTMLAttributes } from 'react';
+import { cloneElement, isValidElement, useEffect, useId, useRef, useState, type ButtonHTMLAttributes, type ReactElement, type ReactNode, type InputHTMLAttributes, type SelectHTMLAttributes, type TextareaHTMLAttributes } from 'react';
 import { NavLink, Link } from 'react-router-dom';
 import { money, upload } from './api';
 import { IconClose, IconMinus, IconPlus } from './icons';
@@ -9,15 +9,20 @@ export function Button({ variant = 'primary', size, busy, children, className = 
   return <button {...p} disabled={p.disabled || busy} className={`btn ${variant} ${size ?? ''} ${className}`}>{busy ? 'Please wait…' : children}</button>;
 }
 
-/** Label wraps its control, so the pairing is announced correctly without ids. */
+/** Associates the label with its single control through id/htmlFor (and links hint/error via aria-describedby). */
 export function Field({ label, hint, error, children, className = '' }: { label: string; hint?: string; error?: string; children: ReactNode; className?: string }) {
+  const id = useId();
+  const note = hint || error ? `${id}-note` : undefined;
+  const control = isValidElement(children)
+    ? cloneElement(children as ReactElement<any>, { id: (children.props as any).id ?? id, 'aria-describedby': note, 'aria-invalid': error ? true : undefined })
+    : children;
   return (
-    <label className={`field ${className}`}>
-      <span className="label">{label}</span>
-      {children}
-      {hint && !error && <span className="hint">{hint}</span>}
-      {error && <span className="error-text" role="alert">{error}</span>}
-    </label>
+    <div className={`field ${className}`}>
+      <label className="label" htmlFor={isValidElement(children) ? (children.props as any).id ?? id : undefined}>{label}</label>
+      {control}
+      {hint && !error && <span id={note} className="hint">{hint}</span>}
+      {error && <span id={note} className="error-text" role="alert">{error}</span>}
+    </div>
   );
 }
 export const Input = (p: InputHTMLAttributes<HTMLInputElement>) => <input {...p} className={`input ${p.className ?? ''}`} />;

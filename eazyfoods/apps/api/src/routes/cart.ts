@@ -80,8 +80,8 @@ export const cartRoutes: FastifyPluginAsync = async (app) => {
         const o = (await c.query(`SELECT o.price_cents, o.is_active, o.stock_on_hand - o.stock_reserved AS available, s.orderable FROM offers_live o JOIN storefronts s ON s.id = o.store_id WHERE o.id = $1`, [it.offer_id])).rows[0];
         if (!o || !o.is_active || !o.orderable || o.available < 1) { skipped.push(it.offer_id); continue; }
         await c.query(
-          `INSERT INTO cart_items(cart_id, offer_id, quantity, added_price_cents) VALUES ($1,$2,LEAST($3,$5),$4)
-           ON CONFLICT (cart_id, offer_id) DO UPDATE SET quantity = LEAST(cart_items.quantity + $3, $5, 99)`, [cid, it.offer_id, it.quantity, o.price_cents, o.available]);
+          `INSERT INTO cart_items(cart_id, offer_id, quantity, added_price_cents) VALUES ($1,$2,LEAST($3::int,$5::int),$4)
+           ON CONFLICT (cart_id, offer_id) DO UPDATE SET quantity = LEAST(cart_items.quantity + $3::int, $5::int, 99)`, [cid, it.offer_id, it.quantity, o.price_cents, o.available]);
       }
     });
     return { ...(await cartView(req.user!.id)), skipped };

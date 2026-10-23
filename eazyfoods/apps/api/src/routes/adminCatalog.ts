@@ -313,5 +313,15 @@ export const adminCatalogRoutes: FastifyPluginAsync = async (app) => {
     await tx(async (c) => { await saveRecipe(c, id, b); await audit(req.user!.id, 'recipe.updated', 'recipe', id, { title: b.title }, c); });
     return { ok: true };
   });
+  app.get<{ Params: { id: string } }>('/recipes/:id', { preHandler: content }, async (req) => {
+    const id = uuid.parse(req.params.id);
+    const r = (await pool.query(`SELECT r.*, rg.slug AS region_slug, cn.slug AS country_slug FROM recipes r LEFT JOIN regions rg ON rg.id = r.region_id LEFT JOIN countries cn ON cn.id = r.country_id WHERE r.id = $1`, [id])).rows[0];
+    if (!r) throw notFound('Recipe not found');
+    const ings = (await pool.query(`SELECT i.id, i.label, i.quantity_text, i.optional, p.slug AS product_slug,
+        COALESCE((SELECT array_agg(ap.slug) FROM recipe_ingredient_alternatives a JOIN products ap ON ap.id = a.product_id WHERE a.recipe_ingredient_id = i.id), '{}') AS alternative_slugs
+        FROM recipe_ingredients i LEFT JOIN products p ON p.id = i.product_id WHERE i.recipe_id = $1 ORDER BY i.position`, [id])).rows;
+    return { id: r.id, slug: r.slug, title: r.title, summary: r.summary, region_slug: r.region_slug, country_slug: r.country_slug, servings: r.servings, prep_minutes: r.prep_minutes, cook_minutes: r.cook_minutes,
+      steps: r.steps, food_safety_note: r.food_safety_note, reviewed: r.reviewed, ai_generated: r.ai_generated, status: r.status, ingredients: ings };
+  });
   app.get('/recipes', { preHandler: content }, async () => (await pool.query('SELECT id, slug, title, status, reviewed, ai_generated FROM recipes ORDER BY title')).rows);
 };

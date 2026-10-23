@@ -1,0 +1,24 @@
+.bars { display: flex; align-items: flex-end; gap: 4px; height: 120px; margin: 8px 0 4px; }
+.bars .bar-col { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; min-width: 0; }
+.bars .bar-fill { width: 100%; background: var(--green); border-radius: 4px 4px 0 0; min-height: 2px; }
+.bars .bar-fill.zero { background: var(--line-2); }
+.bars-labels { display: flex; gap: 4px; font-size: .68rem; color: var(--ink-2); } .bars-labels span { flex: 1; text-align: center; overflow: hidden; }
+.order-card { border-left: 5px solid var(--green); } .order-card.attention { border-left-color: var(--red); }
+.order-lines { list-style: none; padding: 0; margin: 8px 0; } .order-lines li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.order-lines li:last-child { border: 0; }
+.slip { display: none; }
+@media print {
+  body * { visibility: hidden !important; }
+  .slip.printing, .slip.printing * { visibility: visible !important; }
+  .slip.printing { display: block; position: absolute; left: 0; top: 0; width: 100%; padding: 16px; color: #000; background: #fff; }
+}
+.checklist { list-style: none; padding: 0; margin: 0; } .checklist li { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); align-items: flex-start; }
+.checklist .mark { flex: 0 0 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: var(--line); font-size: .8rem; font-weight: 800; } .checklist .mark.done { background: var(--green); color: #fff; }
+.week-row { display: grid; grid-template-columns: 56px 1fr 1fr auto; gap: 8px; align-items: center; margin-bottom: 8px; }
+.agreement { max-height: 260px; overflow: auto; white-space: pre-wrap; background: var(--paper); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 12px; font-size: .9rem; }
+.switch-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.pill-list { display: flex; flex-wrap: wrap; gap: 8px 16px; }
+.csv-box { font-family: ui-monospace, Menlo, monospace; font-size: .85rem; min-height: 140px; }
+/* Shared-kit fix (styles.css has no mobile column for .portal, so the nav's scroll strip widened the page). */
+@media (max-width: 899px) { .portal { grid-template-columns: minmax(0, 1fr); } }
+.portal-nav, .portal-main { min-width: 0; }

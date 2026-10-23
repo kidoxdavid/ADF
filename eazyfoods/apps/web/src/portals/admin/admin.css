@@ -1,0 +1,14 @@
+.why summary { cursor: pointer; font-size: .8rem; color: var(--green); min-height: 24px; } .why p { margin: 4px 0 0; max-width: 60ch; }
+.check-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 0 12px; max-height: 260px; overflow: auto; border: 1px solid var(--line); border-radius: var(--r-sm); padding: 6px 10px; background: var(--card); }
+.kanban { display: grid; gap: 12px; grid-template-columns: 1fr; } @media (min-width: 900px) { .kanban { grid-template-columns: repeat(3, 1fr); } } @media (min-width: 1250px) { .kanban { grid-template-columns: repeat(6, minmax(0,1fr)); } }
+.kanban .col { background: color-mix(in srgb, var(--line) 30%, transparent); border-radius: var(--r); padding: 10px; } .kanban h3 { font-size: .95rem; margin-bottom: 8px; }
+.kanban .item { display: block; background: var(--card); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 8px 10px; margin-bottom: 8px; text-decoration: none; color: inherit; } .kanban .item.overdue { border-color: var(--red); background: var(--red-bg); }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: 4px 16px; } .kv dt { font-weight: 700; } .kv dd { margin: 0; overflow-wrap: anywhere; }
+.msg { border-radius: var(--r-sm); padding: 10px 12px; margin-bottom: 8px; background: var(--paper); border: 1px solid var(--line); } .msg.internal { background: var(--ochre-bg); border-style: dashed; border-color: var(--ochre); } .msg .meta { font-size: .78rem; color: var(--ink-2); }
+.test-only { background: var(--ochre-bg); border: 2px dashed var(--ochre); border-radius: var(--r-sm); padding: 12px 14px; margin-bottom: 12px; font-weight: 600; }
+.legal { border: 2px solid var(--red); background: var(--red-bg); border-radius: var(--r-sm); padding: 10px 12px; margin: 10px 0; font-weight: 600; }
+.ok-dot, .bad-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; } .ok-dot { background: var(--green); } .bad-dot { background: var(--red); }
+.json { font: .78rem ui-monospace, monospace; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--paper); border-radius: var(--r-sm); padding: 6px 8px; max-height: 120px; overflow: auto; }
+.filters-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 12px; } .filters-row .field { margin: 0; min-width: 160px; }
+.kpi { position: relative; } .kpi .why { margin-top: 4px; }
+.cell { min-width: 0; overflow-wrap: anywhere; } @media (max-width: 720px) { .cell { text-align: right; } .cell .row { justify-content: flex-end; } }

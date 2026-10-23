@@ -1,64 +1,71 @@
-# Architecture & decisions
+# Architecture and decisions
 
-## ADR-001: Modular monolith, TypeScript end to end
-One Fastify API, one PostgreSQL database, one React app with role-based areas (customer now; vendor, admin and driver areas follow).
-No microservices: a single deployable is cheaper to run and easier to keep transactionally correct (stock, orders, payments).
-Plain SQL migrations + `pg` with parameterised queries: the money/stock logic is clearer in SQL than behind an ORM.
+## Overview
+One TypeScript **modular monolith**: a Fastify API with PostgreSQL, and one React (Vite) single-page app with customer, vendor, admin and driver areas (portals are lazy-loaded). No microservices: stock, orders, payments and the ledger must be transactionally consistent, and one deployable is cheaper to run and reason about.
 
-## ADR-002: Catalogue is shared; offers are per store
-`products` hold identity and descriptive facts. `store_offers` hold each store's price, stock and active flag.
-The same garri can be sold by three stores at three prices without duplicating catalogue data.
+```
+browser (customer / vendor / admin / driver areas)
+   │  HTTPS, session cookie
+   ▼
+Fastify API ── routes (validated with zod)
+   │            ├─ services: pricing, checkout, orders (state machine), payments (webhooks), refunds, ledger, delivery, notify
+   │            └─ jobs: expire stock holds, auto-reject silent stores, send email outbox
+   ▼
+PostgreSQL (SQL migrations)        Payment provider (Stripe / dev mock)        Email (Resend / log)        Image storage (local disk behind an interface)
+```
 
-## ADR-003: Money is integer cents (CAD)
-No floats anywhere. Currency/tax/commission/fees will live in `app_settings` and be audited when changed.
+## Decisions
+- **ADR-001 Modular monolith, TypeScript end to end.** Plain SQL migrations and parameterised `pg` queries: stock and money logic is clearer and safer in SQL than behind an ORM.
+- **ADR-002 Shared catalogue, per-store offers.** Products hold identity; `store_offers` hold price, stock, active. A scheduled `offer_promotions` row overrides price through the `offers_live` view used by every public read and by checkout.
+- **ADR-003 Money is integer cents (CAD).** Rounding helpers use largest-remainder allocation so parts always sum to the whole.
+- **ADR-004 Search = Postgres trigram + verified aliases.** Typo tolerance without extra infrastructure at pilot scale. Only *verified* aliases match, so we never imply an unreviewed ingredient equivalence (allergen risk). Every query is logged for unmet-demand analysis. Revisit a search engine when measured need appears.
+- **ADR-005 Sessions, not JWTs.** Opaque token in an HttpOnly SameSite=Lax cookie; only its SHA-256 is stored; revocable. Passwords use scrypt. Mutations reject mismatched `Origin`. Auth and sensitive endpoints are rate limited.
+- **ADR-006 Authorization is per resource.** Roles live in `user_roles` (vendor roles are scoped to a vendor). Every handler checks the specific resource (own order, own store, own deliveries). Staff have explicit permission sets; only `owner` is a wildcard.
+- **ADR-007 Orderable = store published AND vendor approved AND not paused.** Encoded once in the `storefronts` view (also computes open-now in the store's timezone). *Views freeze `s.*`: any migration adding columns to `stores` must recreate the view.*
+- **ADR-008 Orders -> suborders -> lines.** One customer order, one suborder per store (separate fulfilment, fees, ETA, commission). Order status and payment status are separate.
+- **ADR-009 Reservations, then deduction.** Checkout locks offers (`FOR UPDATE`, stable order), reserves stock; payment confirmation commits it; failure/expiry releases it. `CHECK (stock_reserved <= stock_on_hand)` backs this in the database.
+- **ADR-010 Double-entry ledger enforced by the database.** Append-only table plus a deferred constraint trigger that rejects unbalanced transactions at commit.
+- **ADR-011 Provider calls happen after commit** (`tx(fn, after)`), never while holding row locks.
+- **ADR-012 First-party analytics and error log.** No third-party trackers. Funnel events and server errors are stored in our database and surfaced in the admin console; Sentry can be added by setting `SENTRY_DSN`.
+- **ADR-013 Delivery zones are postal-code (FSA) data.** Configurable in the console; no geocoding dependency for the pilot.
 
-## ADR-004: Search = Postgres trigram + verified aliases
-`pg_trgm` gives typo tolerance (`shitto` -> Shito) with no extra infrastructure at pilot catalogue sizes.
-`product_aliases.verified` gates matching: an unreviewed alias is never searchable, so we cannot imply an
-ingredient equivalence (allergen/dietary risk). Results show "Also known as" when matched through an alias.
-Every query is logged in `search_events` for unmet-demand analysis. Revisit a dedicated search engine only when measured need appears.
-
-## ADR-005: Sessions, not JWTs
-Opaque random token in an HttpOnly, SameSite=Lax cookie; only the SHA-256 is stored, so a database leak does not leak sessions
-and sessions can be revoked. Passwords: scrypt. Mutations also reject mismatched `Origin`. Auth endpoints are rate limited.
-
-## ADR-006: Authorization is checked per resource
-Roles live in `user_roles`; vendor roles are scoped to a vendor. Every vendor route verifies the store belongs to the caller's vendor
-(`canManageStore`) - never just "is a vendor". Tests prove cross-vendor access is denied.
-
-## ADR-007: Orderable = published store AND approved vendor
-Encoded once in the `storefronts` view (also computes open-now in the store's timezone) and used by every public query.
-
-## Data model (implemented in M1)
+## Data model
 ```mermaid
 erDiagram
   users ||--o{ user_roles : has
-  users ||--o{ sessions : has
   vendors ||--o{ stores : owns
-  vendors ||--o{ user_roles : scopes
-  regions }o--o{ countries : region_countries
-  stores }o--o{ regions : store_regions
-  stores ||--o{ store_hours : opens
+  vendors ||--o{ vendor_documents : verifies
   stores ||--o{ store_offers : lists
   products ||--o{ store_offers : "offered as"
-  products }o--o{ countries : "product_countries (culinary|manufacturing)"
-  products ||--o{ product_aliases : known_as
-  brands ||--o{ products : makes
-  categories ||--o{ products : groups
-  store_offers ||--o{ inventory_adjustments : "append-only history"
-  collections }o--o{ products : collection_products
+  products ||--o{ product_aliases : "known as (verified only searchable)"
+  regions }o--o{ countries : region_countries
+  products }o--o{ countries : "culinary / manufacturing"
+  stores }o--o{ delivery_zones : serves
+  delivery_zones ||--o{ delivery_zone_fsas : covers
+  users ||--o{ carts : has
+  carts ||--o{ cart_items : holds
+  users ||--o{ orders : places
+  orders ||--o{ suborders : splits
+  suborders ||--o{ order_lines : contains
+  order_lines ||--o{ inventory_reservations : holds
+  orders ||--o{ payments : paid_by
+  payments ||--o{ refunds : refunded_by
+  suborders ||--o| deliveries : "delivered by"
+  drivers ||--o{ deliveries : assigned
+  orders ||--o{ ledger_entries : books
+  vendors ||--o{ payouts : paid
+  support_tickets ||--o{ ticket_messages : thread
+  products ||--o{ reviews : "verified purchases"
+  ad_campaigns ||--o{ ad_events : measured
+  recipes ||--o{ recipe_ingredients : needs
 ```
-Integrity rules enforced in the database: `stock_on_hand >= 0`, `stock_reserved <= stock_on_hand`, `compare_at > price`,
-stock history and audit log reject UPDATE/DELETE.
+Database-enforced invariants: non-negative stock; reserved <= on hand; compare-at > price; stock history, audit log and ledger reject UPDATE/DELETE; ledger transactions sum to zero; unique `(provider, event_id)` webhooks; unique idempotency keys for orders, payments and refunds.
 
-## Planned for the order/payment milestone (design, not yet built)
-- `orders` (customer-level) -> `suborders` (one per store) -> `order_lines` (snapshot of name/price/qty).
-- Order status and payment status are separate state machines; an order is *paid* only from a verified provider webhook.
-- `payments` / `payment_events` keyed by provider event id (idempotent webhooks); idempotency keys on create.
-- `inventory_reservations` taken in the checkout transaction with `SELECT ... FOR UPDATE` (the pattern the stock-adjust endpoint already uses), released on payment failure/expiry.
-- Append-only `ledger_entries`; refunds and corrections are reversals, never edits.
-- Provider: Stripe Connect is the leading candidate for multi-vendor payouts in Canada; **must be verified against Stripe's current Canadian marketplace terms before live use**. Helcim to be evaluated for marketplace payout support. Test mode only until credentials and a decision exist.
+## State machine (suborder)
+`awaiting_payment -> placed -> accepted -> preparing -> ready -> out_for_delivery -> delivered` (pickup: `ready -> collected`); terminal: `rejected`, `cancelled`, `expired`. A customer may cancel only while `placed`; vendors act on their own orders; drivers only move `out_for_delivery -> delivered`; staff and the system can use any valid transition. History is recorded for every change.
 
 ## Regional taxonomy
-Regions, countries and the mapping are rows. A country may sit in several regions (Cameroon: West and Central). Products carry
-*culinary association* and *manufacturing origin* separately. Collections are rows (manual items, or region/category rules).
+Regions, countries and mappings are rows; a country may belong to several regions (Cameroon is West and Central). Products carry culinary association and manufacturing origin separately. Collections are rows driven by manual lists or region/category rules. Nothing about regions is hard-coded in the code.
+
+## Security model (see SECURITY.md)
+Least privilege, resource-level authorization, server-side validation, magic-byte upload validation, private business documents, audit log of consequential actions, rate limits, strict CORS to one origin, Helmet headers, no secrets in source.

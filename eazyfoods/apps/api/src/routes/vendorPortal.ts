@@ -46,6 +46,11 @@ export const vendorPortalRoutes: FastifyPluginAsync = async (app) => {
 
   app.get('/onboarding', async (req) => onboardingStatus(vendorId(req)));
 
+  app.get('/profile', async (req) => {
+    const v = (await pool.query('SELECT name, legal_name, business_number, phone, contact_email, status, agreement_accepted_at, stripe_account_id IS NOT NULL AS payout_connected FROM vendors WHERE id = $1', [vendorId(req)])).rows[0];
+    return v;
+  });
+
   app.put('/profile', async (req) => {
     ownerOnly(req);
     const b = z.object({ name: z.string().min(2).max(120), legal_name: z.string().max(160).nullable().optional(), business_number: z.string().max(40).nullable().optional(), phone: z.string().max(25), contact_email: z.string().email() }).parse(req.body);

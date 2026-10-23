@@ -20,7 +20,8 @@ export function useAction<A extends unknown[], R>(fn: (...a: A) => Promise<R>) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
   const alive = useRef(true);
-  useEffect(() => () => { alive.current = false; }, []);
+  // StrictMode mounts, unmounts and re-mounts: the flag must be set back to true on every mount.
+  useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
   const run = useCallback(async (...a: A) => {
     setBusy(true); setError(undefined);
     try { return await fn(...a); }

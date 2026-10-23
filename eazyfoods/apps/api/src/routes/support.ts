@@ -51,6 +51,11 @@ export const supportRoutes: FastifyPluginAsync = async (app) => {
     return { ok: true };
   });
 
+  app.get('/vendor/support', async (req) =>
+    (await pool.query(`SELECT t.id, t.subject, t.status, t.created_at, t.updated_at,
+        (SELECT body FROM ticket_messages m WHERE m.ticket_id = t.id AND NOT m.is_internal AND m.author_user_id <> $2 ORDER BY m.id DESC LIMIT 1) AS last_reply
+       FROM support_tickets t WHERE t.kind = 'vendor' AND t.vendor_id = ANY($1::uuid[]) ORDER BY t.updated_at DESC LIMIT 50`, [vendorIdsOf(req.user!), req.user!.id])).rows);
+
   // Vendors ask for help with disputes or fulfilment problems.
   app.post('/vendor/support', async (req, reply) => {
     const vids = vendorIdsOf(req.user!);

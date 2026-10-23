@@ -21,12 +21,15 @@ const schema = z.object({
   PUBLIC_API_URL: z.string().default('http://localhost:4000'),
   SENTRY_DSN: z.string().optional(),
   DISABLE_BACKGROUND_JOBS: z.coerce.boolean().default(false),
+  // For automated browser tests only: raises per-route rate limits. Refused in production.
+  RATE_LIMIT_OFF: z.coerce.boolean().default(false),
 });
 
 export const config = schema.parse(process.env);
 export const isProd = config.NODE_ENV === 'production';
 
 if (isProd) {
+  if (config.RATE_LIMIT_OFF) throw new Error('RATE_LIMIT_OFF is not allowed in production');
   if (config.PAYMENT_PROVIDER === 'mock') throw new Error('PAYMENT_PROVIDER=mock is not allowed in production');
   if (config.PAYMENT_PROVIDER === 'stripe' && (!config.STRIPE_SECRET_KEY || !config.STRIPE_WEBHOOK_SECRET))
     throw new Error('Stripe requires STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET');

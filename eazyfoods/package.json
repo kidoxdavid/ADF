@@ -1,7 +1,9 @@
 {
   "name": "eazyfoods",
   "private": true,
-  "workspaces": ["apps/*"],
+  "workspaces": [
+    "apps/*"
+  ],
   "scripts": {
     "dev:api": "npm -w apps/api run dev",
     "dev:web": "npm -w apps/web run dev",
@@ -9,6 +11,9 @@
     "seed": "npm -w apps/api run seed",
     "test": "npm -w apps/api test",
     "typecheck": "npm -w apps/api run typecheck && npm -w apps/web run typecheck",
-    "build": "npm -w apps/web run build"
+    "build": "npm -w apps/web run build",
+    "docs:api": "node scripts/gen-api-docs.mjs",
+    "e2e": "npm -w apps/e2e test",
+    "lint:audit": "npm audit --audit-level=high --omit=dev"
   }
 }
